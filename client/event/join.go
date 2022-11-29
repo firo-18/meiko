@@ -16,12 +16,12 @@ func init() {
 			data := i.ApplicationCommandData()
 			user := i.Member.User
 			var lead, sum int64
-			var room string
+			var key string
 
 			for i, v := range data.Options {
 				switch v.Name {
 				case "room":
-					room = data.Options[i].StringValue()
+					key = data.Options[i].StringValue()
 				case "lead":
 					lead = data.Options[i].IntValue()
 				case "sum":
@@ -30,7 +30,7 @@ func init() {
 			}
 
 			// Check if room exist and return error if not.
-			if _, ok := RoomList[room]; !ok {
+			if room, ok := RoomList[key]; !ok {
 				err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 					Type: discordgo.InteractionResponseChannelMessageWithSource,
 					Data: &discordgo.InteractionResponseData{
@@ -54,11 +54,11 @@ func init() {
 				skillValue := (float64(sum-lead) * 0.002) + float64(lead)/100 + 1
 
 				// Check if user is already in the fillers list. If existed, update the info instead.
-				if i, ok := findFiller(RoomList[room].Fillers, *user); ok {
-					RoomList[room].Fillers[i] = ghost.New(*user, skillValue)
+				if i, ok := FindFiller(RoomList[key].Fillers, *user); ok {
+					room.Fillers[i] = ghost.New(*user, skillValue)
 				} else {
 					// Add user info to room if not found.
-					RoomList[room].Fillers = append(RoomList[room].Fillers, ghost.New(*user, skillValue))
+					room.Fillers = append(room.Fillers, ghost.New(*user, skillValue))
 				}
 
 				err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
@@ -67,18 +67,18 @@ func init() {
 						Embeds: []*discordgo.MessageEmbed{
 							{
 								Title:       "Success",
-								Description: "You have successfully sign up to run/fill for the event.",
+								Description: "You have successfully join to run/fill for the event. To schedule your availability, run command /signup.",
 								Color:       discord.EmbedColor,
 								Timestamp:   discord.EmbedTimestamp,
 								Footer:      discord.EmbedFooter(s),
 								Fields: []*discordgo.MessageEmbedField{
 									{
 										Name:  "Room",
-										Value: discord.StyleFieldValues(room),
+										Value: discord.StyleFieldValues(room.Name),
 									},
 									{
 										Name:  "Event",
-										Value: discord.StyleFieldValues(RoomList[room].Event.Name),
+										Value: discord.StyleFieldValues(RoomList[key].Event.Name),
 									},
 									{
 										Name:  "ISV",
@@ -111,12 +111,14 @@ func init() {
 				}
 			}
 
-			for k := range RoomList {
-				if ok, _ := regexp.MatchString("(?i)"+choice, k); ok {
-					choices = append(choices, &discordgo.ApplicationCommandOptionChoice{
-						Name:  k,
-						Value: k,
-					})
+			for _, v := range RoomList {
+				if v.Server == i.GuildID {
+					if ok, _ := regexp.MatchString("(?i)"+choice, v.Name); ok {
+						choices = append(choices, &discordgo.ApplicationCommandOptionChoice{
+							Name:  v.Name,
+							Value: v.Key,
+						})
+					}
 				}
 			}
 
@@ -136,14 +138,4 @@ func init() {
 			}
 		}
 	}
-}
-
-// findFiller loops through the fillers slice to find a filler. If exists, it returns the index and true, otherwise, it returns 0 and false.
-func findFiller(fillers []*ghost.Ghost, filler discordgo.User) (int, bool) {
-	for i, v := range fillers {
-		if v.User == filler {
-			return i, true
-		}
-	}
-	return 0, false
 }

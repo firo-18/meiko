@@ -19,9 +19,8 @@ var (
 func init() {
 	db.DeserializeRooms(&RoomList)
 	go fetchEvents()
-	log.Println(RoomList)
-	// log.Println(len(RoomList["TEST"].Fillers))
-	// log.Println(RoomList["TEST"].Fillers[0].SkillValue)
+
+	// log.Println(len(RoomList))
 }
 
 func fetchEvents() {

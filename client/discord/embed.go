@@ -8,10 +8,11 @@ import (
 )
 
 var (
-	ISO8601        = "2006-01-02T03:04:05-0700"
-	EmbedTimestamp = time.Now().Format(ISO8601)
-	EmbedColor     = 15548997
-	EmbedFooter    = func(s *discordgo.Session) *discordgo.MessageEmbedFooter {
+	ISO8601          = "2006-01-02T03:04:05-0700"
+	TimeOutputFormat = "Jan 02 15:04"
+	EmbedTimestamp   = time.Now().Format(ISO8601)
+	EmbedColor       = 15548997
+	EmbedFooter      = func(s *discordgo.Session) *discordgo.MessageEmbedFooter {
 		return &discordgo.MessageEmbedFooter{
 			Text:    s.State.User.Username,
 			IconURL: s.State.User.AvatarURL(""),

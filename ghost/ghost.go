@@ -17,8 +17,8 @@ type Ghost struct {
 }
 
 // New takes constructs a new Ghost with initial values from a discordgo.User input and return its address.
-func New(user discordgo.User, skill float64) *Ghost {
-	return &Ghost{
+func New(user discordgo.User, skill float64) Ghost {
+	return Ghost{
 		User:         user,
 		SkillValue:   skill,
 		CreatedAt:    time.Now(),

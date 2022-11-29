@@ -39,7 +39,7 @@ func init() {
 					Data: &discordgo.InteractionResponseData{
 						Embeds: []*discordgo.MessageEmbed{
 							{
-								Title:     "Room Info - " + data.Options[0].StringValue(),
+								Title:     "Room Info - " + room.Name,
 								Color:     discord.EmbedColor,
 								Timestamp: discord.EmbedTimestamp,
 								Footer:    discord.EmbedFooter(s),
@@ -77,12 +77,14 @@ func init() {
 			choices := []*discordgo.ApplicationCommandOptionChoice{}
 			choice := data.Options[0].StringValue()
 
-			for k := range RoomList {
-				if ok, _ := regexp.MatchString("(?i)"+choice, k); ok {
-					choices = append(choices, &discordgo.ApplicationCommandOptionChoice{
-						Name:  k,
-						Value: k,
-					})
+			for _, v := range RoomList {
+				if v.Server == i.GuildID {
+					if ok, _ := regexp.MatchString("(?i)"+choice, v.Name); ok {
+						choices = append(choices, &discordgo.ApplicationCommandOptionChoice{
+							Name:  v.Name,
+							Value: v.Key,
+						})
+					}
 				}
 			}
 

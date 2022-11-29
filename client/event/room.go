@@ -27,26 +27,10 @@ func init() {
 			}
 
 			name = strings.ToUpper(name)
+			key := i.GuildID + " - " + name
 
-			if _, ok := RoomList[name]; ok {
-				err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-					Type: discordgo.InteractionResponseChannelMessageWithSource,
-					Data: &discordgo.InteractionResponseData{
-						Embeds: []*discordgo.MessageEmbed{
-							{
-								Title:       "Error",
-								Description: discord.StyleFieldValues("Room name '", name, "' is already existed. Choose a different name."),
-								Color:       discord.EmbedColor,
-								Timestamp:   discord.EmbedTimestamp,
-								Footer:      discord.EmbedFooter(s),
-							},
-						},
-						Flags: discordgo.MessageFlagsEphemeral,
-					},
-				})
-				if err != nil {
-					log.Fatal(err)
-				}
+			if _, ok := RoomList[key]; ok {
+				discord.EmbedError(s, i, discord.EmbedErrorRoomNameDuplicated)
 			} else {
 				idx, err := strconv.Atoi(event)
 				if err != nil {
@@ -58,21 +42,37 @@ func init() {
 					idx-- // RMD shenanigan. Missing 1 event basically, so EventID jumps from 37 to 39.
 				}
 
-				RoomList[name] = room.New(EventList[idx], *i.Member.User)
+				RoomList[key] = room.New(EventList[idx], *i.Member.User, name, i.GuildID)
 
 				err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 					Type: discordgo.InteractionResponseChannelMessageWithSource,
 					Data: &discordgo.InteractionResponseData{
 						Embeds: []*discordgo.MessageEmbed{
 							{
-								Title:       "Success",
-								Description: discord.StyleFieldValues("Room '", name, "' has been created."),
-								Color:       discord.EmbedColor,
-								Timestamp:   discord.EmbedTimestamp,
-								Footer:      discord.EmbedFooter(s),
+								Title:     "Room Created",
+								Color:     discord.EmbedColor,
+								Timestamp: discord.EmbedTimestamp,
+								Footer:    discord.EmbedFooter(s),
+								Fields: []*discordgo.MessageEmbedField{
+									{
+										Name:  "Name",
+										Value: name,
+									},
+									{
+										Name:  "Event",
+										Value: EventList[idx].Name,
+									},
+									{
+										Name:  "Server",
+										Value: i.GuildID,
+									},
+									{
+										Name:  "Created By",
+										Value: i.Member.User.Username,
+									},
+								},
 							},
 						},
-						Flags: discordgo.MessageFlagsEphemeral,
 					},
 				})
 				if err != nil {

@@ -9,26 +9,35 @@ import (
 )
 
 const (
-	UnixPerHour        = 1_000 * 3_600
+	UnixMilliPerHour   = 1_000 * 3_600
 	EventEndTimeOffset = 1_000
 )
 
 // Room lists all the scheduling and user data for tiering.
 type Room struct {
-	Event    event.Event
-	Creator  discordgo.User
-	Runner   string
-	Fillers  []*ghost.Ghost
-	Schedule [][]*ghost.Ghost
-	CreateAt time.Time
+	Key         string           `json:"key"`
+	Name        string           `json:"name"`
+	Server      string           `json:"server"`
+	Runner      string           `json:"runner"`
+	Event       event.Event      `json:"event"`
+	EventLength int              `json:"length"`
+	Fillers     []ghost.Ghost    `json:"fillers"`
+	Schedule    [][]*ghost.Ghost `json:"schedule"`
+	Creator     discordgo.User   `json:"creator"`
+	CreateAt    time.Time        `json:"createAt"`
 }
 
-func New(e event.Event, creator discordgo.User) *Room {
+func New(e event.Event, creator discordgo.User, name, guildID string) *Room {
+	length := int(e.End-e.Start+EventEndTimeOffset) / UnixMilliPerHour
 	return &Room{
-		Event:    e,
-		Creator:  creator,
-		Runner:   creator.Username,
-		Schedule: make([][]*ghost.Ghost, (e.End-e.Start+EventEndTimeOffset)/UnixPerHour),
-		CreateAt: time.Now(),
+		Key:         guildID + " - " + name,
+		Name:        name,
+		Server:      guildID,
+		Event:       e,
+		EventLength: length,
+		Creator:     creator,
+		Runner:      creator.Username,
+		Schedule:    make([][]*ghost.Ghost, length),
+		CreateAt:    time.Now(),
 	}
 }

@@ -45,7 +45,6 @@ func init() {
 }
 
 func Open() {
-
 	err := s.Open()
 	if err != nil {
 		log.Fatalln("Cannot open the session:", err)
@@ -53,7 +52,7 @@ func Open() {
 	defer s.Close()
 
 	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
 
 	log.Println("Press Ctrl+C to exit")
 
