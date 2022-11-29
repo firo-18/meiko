@@ -6,28 +6,14 @@ import (
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/firo-18/meiko/client/discord"
 	"github.com/firo-18/meiko/client/event"
 )
 
 func init() {
 	List["hour-select"] = func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		if i.Message.Interaction.User.String() != i.Member.User.String() {
-			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Embeds: []*discordgo.MessageEmbed{
-						{
-							Title:       "Error",
-							Description: "This interaction is intended for the original user only.",
-						},
-					},
-					Flags: discordgo.MessageFlagsEphemeral,
-				},
-			})
-
-			if err != nil {
-				log.Fatalln("interaction-respond:", err)
-			}
+			discord.EmbedError(s, i, discord.EmbedErrorInvalidInteraction)
 		} else {
 			data := i.MessageComponentData()
 
@@ -42,37 +28,60 @@ func init() {
 				endIdx = room.EventLength
 			}
 
-			shifts := []int{}
+			// Check if default is selected.
+			var isDefault bool
+			if len(args) > 2 {
+				isDefault = true
+			}
+			if isDefault && len(data.Values) == 1 {
+				// If only default is selected, deschedules all hours for the day.
+				for j := hourIdx; j < endIdx; j++ {
+					if shiftIdx, has := hasShift(userID, key, j); has {
+						room.Schedule[j][shiftIdx] = room.Schedule[j][len(room.Schedule[j])-1]
+						room.Schedule[j] = room.Schedule[j][:len(room.Schedule[j])-1]
+					}
+				}
+			} else {
+				// Else schedules and deshedules user based on selection.
 
-			for _, v := range data.Values {
-				if _, idx, ok := strings.Cut(v, "_"); ok {
+				start := 0
+				if isDefault {
+					start = 1
+				}
+
+				shifts := []int{}
+				for _, v := range data.Values[start:] {
+					args := strings.Split(v, "_")
+					idx := args[1]
 					hour, err := strconv.Atoi(idx)
 					if err != nil {
 						log.Fatal(err)
 					}
 					shifts = append(shifts, hour)
 				}
-			}
 
-			for j := hourIdx; j < endIdx; j++ {
-				if shiftIdx, has := hasShift(userID, key, j); has {
-					if !inShift(shifts, j) {
-						room.Schedule[j][shiftIdx] = room.Schedule[j][len(room.Schedule[j])-1]
-						room.Schedule[j] = room.Schedule[j][:len(room.Schedule[j])-1]
-
-					}
-				} else {
-					if inShift(shifts, j) {
-						fillerIdx, _ := findFiller(key, userID)
-						room.Schedule[j] = append(room.Schedule[j], &room.Fillers[fillerIdx])
+				for j := hourIdx; j < endIdx; j++ {
+					if shiftIdx, has := hasShift(userID, key, j); has {
+						if !inShift(shifts, j) {
+							room.Schedule[j][shiftIdx] = room.Schedule[j][len(room.Schedule[j])-1]
+							room.Schedule[j] = room.Schedule[j][:len(room.Schedule[j])-1]
+						}
+					} else {
+						if inShift(shifts, j) {
+							fillerIdx, _ := findFiller(key, userID)
+							room.Schedule[j] = append(room.Schedule[j], &room.Fillers[fillerIdx])
+						}
 					}
 				}
+
 			}
+
+			dayIdx := hourIdx / 24
 
 			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseUpdateMessage,
 				Data: &discordgo.InteractionResponseData{
-					// Embeds:     scheduleEmbeds(s, key, day),
+					Embeds:     scheduleEmbeds(s, key, dayIdx),
 					Components: event.ScheduleDayComponent(room, room.EventLength/24+1),
 				},
 			})

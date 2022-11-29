@@ -6,5 +6,6 @@ import (
 
 func main() {
 	// command.DeployTest()
+	// command.DeployProduction()
 	client.Open()
 }

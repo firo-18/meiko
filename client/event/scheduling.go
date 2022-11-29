@@ -1,12 +1,14 @@
 package event
 
 import (
+	"fmt"
 	"log"
 	"regexp"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/firo-18/meiko/client/discord"
+	"github.com/firo-18/meiko/room"
 )
 
 const (
@@ -101,4 +103,33 @@ func init() {
 			}
 		}
 	}
+}
+
+func ScheduleDayComponent(room *room.Room, days int) []discordgo.MessageComponent {
+	components := []discordgo.MessageComponent{
+		discordgo.ActionsRow{
+			Components: []discordgo.MessageComponent{
+				discordgo.SelectMenu{
+					CustomID:    "day-select",
+					Placeholder: "Select a day to schedule.",
+					Options:     DaySelectMenu(room, days),
+				},
+			},
+		},
+	}
+
+	return components
+}
+
+func DaySelectMenu(room *room.Room, days int) []discordgo.SelectMenuOption {
+	options := []discordgo.SelectMenuOption{}
+
+	for i := 0; i < days; i++ {
+		options = append(options, discordgo.SelectMenuOption{
+			Label:       fmt.Sprint("Day ", i+1),
+			Value:       fmt.Sprint(room.Key, "_", i+1),
+			Description: time.UnixMilli(room.Event.Start).Add(time.Hour * 24 * time.Duration(i)).Local().Format(OptionDateFormat),
+		})
+	}
+	return options
 }

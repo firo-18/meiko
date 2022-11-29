@@ -31,24 +31,7 @@ func init() {
 
 			// Check if room exist and return error if not.
 			if room, ok := RoomList[key]; !ok {
-				err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-					Type: discordgo.InteractionResponseChannelMessageWithSource,
-					Data: &discordgo.InteractionResponseData{
-						Embeds: []*discordgo.MessageEmbed{
-							{
-								Title:       "Error",
-								Description: "Room not exist. Select a room from the list.",
-								Color:       discord.EmbedColor,
-								Timestamp:   discord.EmbedTimestamp,
-								Footer:      discord.EmbedFooter(s),
-							},
-						},
-						Flags: discordgo.MessageFlagsEphemeral,
-					},
-				})
-				if err != nil {
-					log.Fatal(err)
-				}
+				discord.EmbedError(s, i, discord.EmbedErrorRoom404)
 			} else {
 				// Calculate skill multiplier from ISV.
 				skillValue := (float64(sum-lead) * 0.002) + float64(lead)/100 + 1
@@ -67,7 +50,7 @@ func init() {
 						Embeds: []*discordgo.MessageEmbed{
 							{
 								Title:       "Success",
-								Description: "You have successfully join to run/fill for the event. To schedule your availability, run command /signup.",
+								Description: "You have successfully join to run/fill for the event. Run /scheduling to schedule your availability.",
 								Color:       discord.EmbedColor,
 								Timestamp:   discord.EmbedTimestamp,
 								Footer:      discord.EmbedFooter(s),

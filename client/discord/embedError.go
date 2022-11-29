@@ -11,6 +11,7 @@ const (
 	EmbedErrorRoomNotJoined      = 2
 	EmbedErrorRoomEnded          = 3
 	EmbedErrorRoomNameDuplicated = 4
+	EmbedErrorInvalidInteraction = 5
 )
 
 func EmbedError(s *discordgo.Session, i *discordgo.InteractionCreate, code int) {
@@ -26,6 +27,8 @@ func EmbedError(s *discordgo.Session, i *discordgo.InteractionCreate, code int) 
 		embed.Description = "Event has ended. Room data will be archived shortly."
 	case 4:
 		embed.Description = "Room name already exists. Choose a different name."
+	case 5:
+		embed.Description = "This interaction is intended for the original user only."
 	}
 
 	embeds := []*discordgo.MessageEmbed{embed}

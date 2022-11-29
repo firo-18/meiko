@@ -6,8 +6,6 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-// Types
-
 // Ghost defines the type of data stores for each User.
 type Ghost struct {
 	User         discordgo.User `json:"user"`

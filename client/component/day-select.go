@@ -15,34 +15,24 @@ import (
 func init() {
 	List["day-select"] = func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		if i.Message.Interaction.User.String() != i.Member.User.String() {
-			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Embeds: []*discordgo.MessageEmbed{
-						{
-							Title:       "Error",
-							Description: "This interaction is intended for the original user only.",
-						},
-					},
-					Flags: discordgo.MessageFlagsEphemeral,
-				},
-			})
-
-			if err != nil {
-				log.Fatalln("interaction-respond:", err)
-			}
+			discord.EmbedError(s, i, discord.EmbedErrorInvalidInteraction)
 		} else {
 			data := i.MessageComponentData()
 
-			args := strings.Split(data.Values[0], " - ")
-			key := args[0] + " - " + args[1]
-			day := args[2]
+			args := strings.Split(data.Values[0], "_")
+			key := args[0]
+			day := args[1]
+			dayIdx, err := strconv.Atoi(day)
+			if err != nil {
+				log.Fatal(err)
+			}
+			dayIdx-- // Day 1 is 0 index
 
-			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseUpdateMessage,
 				Data: &discordgo.InteractionResponseData{
-					Embeds:     scheduleEmbeds(s, key, day),
-					Components: scheduleComponent(key, day, i.Member.User.ID),
+					Embeds:     scheduleEmbeds(s, key, dayIdx),
+					Components: scheduleComponent(key, i.Member.User.ID, dayIdx),
 				},
 			})
 			if err != nil {
@@ -52,28 +42,22 @@ func init() {
 	}
 }
 
-func scheduleEmbeds(s *discordgo.Session, key, day string) []*discordgo.MessageEmbed {
+func scheduleEmbeds(s *discordgo.Session, key string, dayIdx int) []*discordgo.MessageEmbed {
 	embeds := []*discordgo.MessageEmbed{
 		{
-			Title:     "Schedule - Day " + day,
+			Title:     fmt.Sprint("Schedule - Day ", dayIdx+1),
 			Color:     discord.EmbedColor,
 			Timestamp: discord.EmbedTimestamp,
 			Footer:    discord.EmbedFooter(s),
-			Fields:    scheduleEmbedFields(key, day),
+			Fields:    scheduleEmbedFields(key, dayIdx),
 		},
 	}
 
 	return embeds
 }
 
-func scheduleEmbedFields(key, day string) []*discordgo.MessageEmbedField {
+func scheduleEmbedFields(key string, dayIdx int) []*discordgo.MessageEmbedField {
 	fields := []*discordgo.MessageEmbedField{}
-
-	dayIdx, err := strconv.Atoi(day)
-	if err != nil {
-		log.Fatal(err)
-	}
-	dayIdx-- // Day 1 is 0 index
 
 	schedule := event.RoomList[key].Schedule
 	startTime := time.UnixMilli(event.RoomList[key].Event.Start)
@@ -98,18 +82,13 @@ func scheduleEmbedFields(key, day string) []*discordgo.MessageEmbedField {
 	return fields
 }
 
-func scheduleComponent(key, day, userID string) []discordgo.MessageComponent {
-	dayNum, err := strconv.Atoi(day)
-	if err != nil {
-		log.Fatal(err)
-	}
-
+func scheduleComponent(key, userID string, dayIdx int) []discordgo.MessageComponent {
 	maxOption := 0
 
-	if dayNum < len(event.RoomList[key].Schedule)/24+1 {
-		maxOption = 24
+	if dayIdx < len(event.RoomList[key].Schedule)/24 {
+		maxOption = 25
 	} else {
-		maxOption = 6
+		maxOption = 7
 	}
 
 	components := []discordgo.MessageComponent{
@@ -119,7 +98,7 @@ func scheduleComponent(key, day, userID string) []discordgo.MessageComponent {
 					CustomID:    "hour-select",
 					Placeholder: "Select your available hours.",
 					MaxValues:   maxOption,
-					Options:     scheduleComponentMenuOption(key, day, userID),
+					Options:     scheduleComponentMenuOption(key, userID, dayIdx),
 				},
 			},
 		},
@@ -128,20 +107,21 @@ func scheduleComponent(key, day, userID string) []discordgo.MessageComponent {
 	return components
 }
 
-func scheduleComponentMenuOption(key, day, userID string) []discordgo.SelectMenuOption {
-	options := []discordgo.SelectMenuOption{}
-
-	dayIdx, err := strconv.Atoi(day)
-	if err != nil {
-		log.Fatal(err)
+func scheduleComponentMenuOption(key, userID string, dayIdx int) []discordgo.SelectMenuOption {
+	options := []discordgo.SelectMenuOption{
+		{
+			Label:       "Default",
+			Value:       fmt.Sprint(key, "_", dayIdx*24, "_", "default"),
+			Description: "Keep this selected. Useful for when deselecting all hours.",
+			Default:     true,
+		},
 	}
-	dayIdx-- // Day 1 is 0 index
 
 	schedule := event.RoomList[key].Schedule
 	startTime := time.UnixMilli(event.RoomList[key].Event.Start)
 
 	for i := dayIdx * 24; i < (dayIdx+1)*24 && i < len(schedule); i++ {
-		timeOutput := startTime.Add(time.Hour * time.Duration(i)).Format(discord.TimeOutputFormat)
+		timeOutput := startTime.Add(time.Hour * time.Duration(i)).Local().Format(discord.TimeOutputFormat)
 
 		_, shift := hasShift(userID, key, i)
 
