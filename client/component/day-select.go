@@ -99,12 +99,26 @@ func scheduleEmbedFields(key, day string) []*discordgo.MessageEmbedField {
 }
 
 func scheduleComponent(key, day, userID string) []discordgo.MessageComponent {
+	dayNum, err := strconv.Atoi(day)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	maxOption := 0
+
+	if dayNum < len(event.RoomList[key].Schedule)/24+1 {
+		maxOption = 24
+	} else {
+		maxOption = 6
+	}
+
 	components := []discordgo.MessageComponent{
 		discordgo.ActionsRow{
 			Components: []discordgo.MessageComponent{
 				discordgo.SelectMenu{
 					CustomID:    "hour-select",
 					Placeholder: "Select your available hours.",
+					MaxValues:   maxOption,
 					Options:     scheduleComponentMenuOption(key, day, userID),
 				},
 			},
@@ -129,22 +143,24 @@ func scheduleComponentMenuOption(key, day, userID string) []discordgo.SelectMenu
 	for i := dayIdx * 24; i < (dayIdx+1)*24 && i < len(schedule); i++ {
 		timeOutput := startTime.Add(time.Hour * time.Duration(i)).Format(discord.TimeOutputFormat)
 
+		_, shift := hasShift(userID, key, i)
+
 		options = append(options, discordgo.SelectMenuOption{
 			Label:       timeOutput,
 			Value:       fmt.Sprint(key, "_", i),
 			Description: "Local time.",
-			Default:     hasShift(userID, key, i),
+			Default:     shift,
 		})
 	}
 
 	return options
 }
 
-func hasShift(userID, key string, hour int) bool {
-	for _, filler := range event.RoomList[key].Schedule[hour] {
+func hasShift(userID, key string, hour int) (int, bool) {
+	for i, filler := range event.RoomList[key].Schedule[hour] {
 		if filler.User.ID == userID {
-			return true
+			return i, true
 		}
 	}
-	return false
+	return 0, false
 }
