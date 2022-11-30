@@ -8,8 +8,8 @@ import (
 )
 
 var (
-	List                         = []*discordgo.ApplicationCommand{}
-	permissionManageServer int64 = discordgo.PermissionManageServer
+	List = []*discordgo.ApplicationCommand{}
+	// permissionManageServer int64 = discordgo.PermissionManageServer
 )
 
 // DeployProd deploys all commands into production discord bot.

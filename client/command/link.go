@@ -1,6 +1,8 @@
 package command
 
-import "github.com/bwmarrin/discordgo"
+import (
+	"github.com/bwmarrin/discordgo"
+)
 
 var (
 	MinISV float64 = 60
@@ -9,17 +11,10 @@ var (
 
 func init() {
 	List = append(List, &discordgo.ApplicationCommand{
-		Name:        "join",
-		Description: "Join the current/upcoming event as a runner/filler.",
+		Name:        "link",
+		Description: "Link your account, ISV, and UTC offset info. Re-run this to update info.",
 		Type:        discordgo.ChatApplicationCommand,
 		Options: []*discordgo.ApplicationCommandOption{
-			{
-				Name:         "room",
-				Description:  "Select a room to join.",
-				Type:         discordgo.ApplicationCommandOptionString,
-				Required:     true,
-				Autocomplete: true,
-			},
 			{
 				Name:        "lead",
 				Description: "Enter your leader's score up %.",
@@ -35,6 +30,13 @@ func init() {
 				MinValue:    &MinISV,
 				MaxValue:    MaxISV * 5,
 				Required:    true,
+			},
+			{
+				Name:         "utc-offset",
+				Description:  "Enter your UTC offset for local time conversion.",
+				Type:         discordgo.ApplicationCommandOptionString,
+				Required:     true,
+				Autocomplete: true,
 			},
 		},
 	})

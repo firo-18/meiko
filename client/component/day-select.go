@@ -10,29 +10,31 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/firo-18/meiko/client/discord"
 	"github.com/firo-18/meiko/client/event"
+	"github.com/firo-18/meiko/schema"
 )
 
 func init() {
 	List["day-select"] = func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		if i.Message.Interaction.User.String() != i.Member.User.String() {
-			discord.EmbedError(s, i, discord.EmbedErrorInvalidInteraction)
+			discord.EmbedError(s, i, discord.EmbedErrInvalidInteraction)
 		} else {
 			data := i.MessageComponentData()
-
 			args := strings.Split(data.Values[0], "_")
 			key := args[0]
 			day := args[1]
-			dayIdx, err := strconv.Atoi(day)
+			d, err := strconv.Atoi(day)
 			if err != nil {
 				log.Fatal(err)
 			}
-			dayIdx-- // Day 1 is 0 index
+
+			filler := event.FillerList[i.Member.User.ID]
+			room := event.RoomList[key]
 
 			err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseUpdateMessage,
 				Data: &discordgo.InteractionResponseData{
-					Embeds:     scheduleEmbeds(s, key, dayIdx),
-					Components: scheduleComponent(key, i.Member.User.ID, dayIdx),
+					Embeds:     scheduleEmbeds(s, room, d, filler.Offset),
+					Components: scheduleComponent(&filler, room, d),
 				},
 			})
 			if err != nil {
@@ -42,38 +44,42 @@ func init() {
 	}
 }
 
-func scheduleEmbeds(s *discordgo.Session, key string, dayIdx int) []*discordgo.MessageEmbed {
+func scheduleEmbeds(s *discordgo.Session, room *schema.Room, d, offset int) []*discordgo.MessageEmbed {
 	embeds := []*discordgo.MessageEmbed{
 		{
-			Title:     fmt.Sprint("Schedule - Day ", dayIdx+1),
+			Title:     fmt.Sprint("Schedule - Day ", d+1),
 			Color:     discord.EmbedColor,
 			Timestamp: discord.EmbedTimestamp,
 			Footer:    discord.EmbedFooter(s),
-			Fields:    scheduleEmbedFields(key, dayIdx),
+			Fields:    scheduleEmbedFields(room, d, offset),
 		},
 	}
 
 	return embeds
 }
 
-func scheduleEmbedFields(key string, dayIdx int) []*discordgo.MessageEmbedField {
+func scheduleEmbedFields(room *schema.Room, d, offset int) []*discordgo.MessageEmbedField {
 	fields := []*discordgo.MessageEmbedField{}
 
-	schedule := event.RoomList[key].Schedule
-	startTime := time.UnixMilli(event.RoomList[key].Event.Start)
+	startTime := time.UnixMilli(room.Event.Start)
 
-	for i := dayIdx * 24; i < (dayIdx+1)*24 && i < len(schedule); i++ {
-		fillers := make([]string, len(schedule[i]))
-		for j, v := range schedule[i] {
+	for h := d * 24; h < (d+1)*24 && h < len(room.Schedule); h++ {
+		eventTime := startTime.Add(time.Hour * time.Duration(h))
+		if eventTime.Before(time.Now()) {
+			continue
+		}
+
+		fillers := make([]string, len(room.Schedule[h]))
+		for j, v := range room.Schedule[h] {
 			fillers[j] = v.User.Username
 		}
 		value := strings.Join(fillers, ", ")
 		if value == "" {
-			value = "No filler signed up."
+			value = "-"
 		}
-		timeOutput := startTime.Add(time.Hour * time.Duration(i)).Format(discord.TimeOutputFormat)
+		timeOutput := eventTime.Add(time.Hour * time.Duration(offset)).UTC().Format(discord.TimeOutputFormat)
 		fields = append(fields, &discordgo.MessageEmbedField{
-			Name:   fmt.Sprint("Hour ", i, " - ", timeOutput),
+			Name:   fmt.Sprint("Hour ", h, " - ", timeOutput),
 			Value:  discord.StyleFieldValues(value),
 			Inline: true,
 		})
@@ -82,13 +88,15 @@ func scheduleEmbedFields(key string, dayIdx int) []*discordgo.MessageEmbedField 
 	return fields
 }
 
-func scheduleComponent(key, userID string, dayIdx int) []discordgo.MessageComponent {
-	maxOption := 0
+func scheduleComponent(filler *schema.Filler, room *schema.Room, d int) []discordgo.MessageComponent {
+	maxOption := 1
 
-	if dayIdx < len(event.RoomList[key].Schedule)/24 {
-		maxOption = 25
-	} else {
-		maxOption = 7
+	startTime := time.UnixMilli(room.Event.Start)
+
+	for h := d * 24; h < (d+1)*24 && h < len(room.Schedule); h++ {
+		if startTime.Add(time.Hour * time.Duration(h)).After(time.Now()) {
+			maxOption++
+		}
 	}
 
 	components := []discordgo.MessageComponent{
@@ -98,7 +106,8 @@ func scheduleComponent(key, userID string, dayIdx int) []discordgo.MessageCompon
 					CustomID:    "hour-select",
 					Placeholder: "Select your available hours.",
 					MaxValues:   maxOption,
-					Options:     scheduleComponentMenuOption(key, userID, dayIdx),
+					Options:     scheduleComponentMenuOption(filler, room, d),
+					Disabled:    maxOption == 1,
 				},
 			},
 		},
@@ -107,28 +116,33 @@ func scheduleComponent(key, userID string, dayIdx int) []discordgo.MessageCompon
 	return components
 }
 
-func scheduleComponentMenuOption(key, userID string, dayIdx int) []discordgo.SelectMenuOption {
+func scheduleComponentMenuOption(filler *schema.Filler, room *schema.Room, d int) []discordgo.SelectMenuOption {
 	options := []discordgo.SelectMenuOption{
 		{
-			Label:       "Default",
-			Value:       fmt.Sprint(key, "_", dayIdx*24, "_", "default"),
-			Description: "Keep this selected. Useful for when deselecting all hours.",
-			Default:     true,
+			Label:       "Deselect All",
+			Value:       fmt.Sprint(room.Key, "_", d, "_", d*24, "_", "deselect"),
+			Description: "Useful for when deselecting all hours .",
+			Default:     false,
 		},
 	}
 
-	schedule := event.RoomList[key].Schedule
-	startTime := time.UnixMilli(event.RoomList[key].Event.Start)
+	startTime := time.UnixMilli(room.Event.Start)
 
-	for i := dayIdx * 24; i < (dayIdx+1)*24 && i < len(schedule); i++ {
-		timeOutput := startTime.Add(time.Hour * time.Duration(i)).Local().Format(discord.TimeOutputFormat)
+	for h := d * 24; h < (d+1)*24 && h < len(room.Schedule); h++ {
+		// Skip time options that are already passed.
+		eventTime := startTime.Add(time.Hour * time.Duration(h))
+		if eventTime.Before(time.Now()) {
+			continue
+		}
 
-		_, shift := hasShift(userID, key, i)
+		timeOutput := eventTime.Add(time.Hour * time.Duration(filler.Offset)).UTC().Format(discord.TimeOutputFormat)
+
+		_, shift := hasShift(filler.User.ID, room.Key, h)
 
 		options = append(options, discordgo.SelectMenuOption{
 			Label:       timeOutput,
-			Value:       fmt.Sprint(key, "_", i),
-			Description: "Local time.",
+			Value:       fmt.Sprint(room.Key, "_", d, "_", h),
+			Description: "Your offset time. If different from local, update through /link.",
 			Default:     shift,
 		})
 	}

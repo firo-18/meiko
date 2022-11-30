@@ -15,6 +15,11 @@ func init() {
 				Required:     true,
 				Autocomplete: true,
 			},
+			{
+				Name:        "delete-room",
+				Description: "Delete select room. Only room creator can delete their rooms.",
+				Type:        discordgo.ApplicationCommandOptionBoolean,
+			},
 		},
 	})
 }

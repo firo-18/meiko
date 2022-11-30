@@ -2,7 +2,7 @@ package event
 
 import (
 	"log"
-	"regexp"
+	"os"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/firo-18/meiko/client/discord"
@@ -13,95 +13,81 @@ func init() {
 		switch i.Type {
 		case discordgo.InteractionApplicationCommand:
 			data := i.ApplicationCommandData()
+			var key string
+			var deleteRoom bool
 
-			if room, ok := RoomList[data.Options[0].StringValue()]; !ok {
-				err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-					Type: discordgo.InteractionResponseChannelMessageWithSource,
-					Data: &discordgo.InteractionResponseData{
-						Embeds: []*discordgo.MessageEmbed{
-							{
-								Title:       "Error",
-								Description: "Room not exist. Select a room from the list.",
-								Color:       discord.EmbedColor,
-								Timestamp:   discord.EmbedTimestamp,
-								Footer:      discord.EmbedFooter(s),
-							},
-						},
-						Flags: discordgo.MessageFlagsEphemeral,
-					},
-				})
-				if err != nil {
-					log.Fatal(err)
-				}
-			} else {
-				err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-					Type: discordgo.InteractionResponseChannelMessageWithSource,
-					Data: &discordgo.InteractionResponseData{
-						Embeds: []*discordgo.MessageEmbed{
-							{
-								Title:     "Room Info - " + room.Name,
-								Color:     discord.EmbedColor,
-								Timestamp: discord.EmbedTimestamp,
-								Footer:    discord.EmbedFooter(s),
-								Fields: []*discordgo.MessageEmbedField{
-									{
-										Name:  "Event",
-										Value: discord.StyleFieldValues(room.Event.Name),
-									},
-									{
-										Name:  "Created By",
-										Value: discord.StyleFieldValues(room.Creator.Username),
-									},
-									{
-										Name:  "Runner",
-										Value: discord.StyleFieldValues(room.Runner),
-									},
-									{
-										Name:  "Fillers",
-										Value: discord.StyleFieldValues(len(room.Fillers), " fillers signed up."),
-									},
-								},
-							},
-						},
-						Flags: discordgo.MessageFlagsEphemeral,
-					},
-				})
-				if err != nil {
-					log.Fatal(err)
+			for _, option := range data.Options {
+				switch option.Name {
+				case "room":
+					key = option.StringValue()
+				case "delete-room":
+					deleteRoom = true
 				}
 			}
+			if room, ok := RoomList[key]; !ok {
+				discord.EmbedError(s, i, discord.EmbedErrRoom404)
+			} else {
+				if deleteRoom {
+					user := i.Member.User
+					if user.ID != room.Owner.ID {
+						discord.EmbedError(s, i, discord.EmbedErrInvalidOwner)
+						return
+					}
 
-		// Autocomplete
-		case discordgo.InteractionApplicationCommandAutocomplete:
-			data := i.ApplicationCommandData()
-			choices := []*discordgo.ApplicationCommandOptionChoice{}
-			choice := data.Options[0].StringValue()
+					// Archives as json before deleting room.
+					err := room.Archive()
+					if err != nil {
+						log.Fatal(err)
+					}
+					delete(RoomList, key)
+					err = os.Remove("./db/rooms/" + room.Key + ".gob")
+					if err != nil {
+						log.Fatal(err)
+					}
 
-			for _, v := range RoomList {
-				if v.Server == i.GuildID {
-					if ok, _ := regexp.MatchString("(?i)"+choice, v.Name); ok {
-						choices = append(choices, &discordgo.ApplicationCommandOptionChoice{
-							Name:  v.Name,
-							Value: v.Key,
-						})
+					err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+						Type: discordgo.InteractionResponseChannelMessageWithSource,
+						Data: &discordgo.InteractionResponseData{
+							Embeds: []*discordgo.MessageEmbed{
+								{
+									Title:     "Room Deleted - " + room.Name,
+									Color:     discord.EmbedColor,
+									Timestamp: discord.EmbedTimestamp,
+									Footer:    discord.EmbedFooter(s),
+									Fields:    discord.RoomInfoFields(room),
+								},
+							},
+							Flags: discordgo.MessageFlagsEphemeral,
+						},
+					})
+					if err != nil {
+						log.Fatal(err)
+					}
+				} else {
+					err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+						Type: discordgo.InteractionResponseChannelMessageWithSource,
+						Data: &discordgo.InteractionResponseData{
+							Embeds: []*discordgo.MessageEmbed{
+								{
+									Title:     "Viewing Room Info - " + room.Name,
+									Color:     discord.EmbedColor,
+									Timestamp: discord.EmbedTimestamp,
+									Footer:    discord.EmbedFooter(s),
+									Fields:    discord.RoomInfoFields(room),
+								},
+							},
+							Flags: discordgo.MessageFlagsEphemeral,
+						},
+					})
+					if err != nil {
+						log.Fatal(err)
 					}
 				}
 			}
 
-			// Max number of choice is 25.
-			if len(choices) > 25 {
-				choices = choices[:25]
-			}
-
-			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionApplicationCommandAutocompleteResult,
-				Data: &discordgo.InteractionResponseData{
-					Choices: choices,
-				},
-			})
-			if err != nil {
-				log.Fatal(err)
-			}
+		// Room Autocomplete
+		case discordgo.InteractionApplicationCommandAutocomplete:
+			roomAutocomplete(s, i)
 		}
 	}
 }

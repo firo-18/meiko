@@ -21,6 +21,12 @@ func init() {
 				Required:     true,
 				Autocomplete: true,
 			},
+			{
+				Name:        "fill-all",
+				Description: "Automatically sign up for all the hour slots.",
+				Type:        discordgo.ApplicationCommandOptionBoolean,
+				Required:    true,
+			},
 		},
 	})
 }

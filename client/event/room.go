@@ -3,13 +3,12 @@ package event
 import (
 	"log"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/firo-18/meiko/client/discord"
-	"github.com/firo-18/meiko/room"
+	"github.com/firo-18/meiko/schema"
 )
 
 func init() {
@@ -17,107 +16,116 @@ func init() {
 		switch i.Type {
 		case discordgo.InteractionApplicationCommand:
 			data := i.ApplicationCommandData()
-			var name, event string
 
-			switch data.Options[0].Name {
-			case "name":
-				name, event = data.Options[0].StringValue(), data.Options[1].StringValue()
-			case "event":
-				event, name = data.Options[0].StringValue(), data.Options[1].StringValue()
+			// Check whether user has linked filler account.
+			if _, ok := FillerList[i.Member.User.ID]; !ok {
+				discord.EmbedError(s, i, discord.EmbedErrInvalidFiller)
+				return
 			}
 
-			name = strings.ToUpper(name)
-			key := i.GuildID + " - " + name
+			var roomName, eventName string
+			var fill bool
+			for i, v := range data.Options {
+				switch v.Name {
+				case "name":
+					roomName = data.Options[i].StringValue()
+				case "event":
+					eventName = data.Options[i].StringValue()
+				case "fill-all":
+					fill = data.Options[i].BoolValue()
+				}
+			}
 
-			if _, ok := RoomList[key]; ok {
-				discord.EmbedError(s, i, discord.EmbedErrorRoomNameDuplicated)
+			// Check if event name exists, and return err if not.
+			if event, ok := EventList[eventName]; !ok {
+				discord.EmbedError(s, i, discord.EmbedErrInvalidEvent)
 			} else {
-				idx, err := strconv.Atoi(event)
-				if err != nil {
-					log.Fatal(err)
-				}
+				roomName = strings.ToUpper(roomName)
+				key := i.GuildID + " - " + roomName
 
-				idx-- // EventID starts at 1.
-				if idx > 37 {
-					idx-- // RMD shenanigan. Missing 1 event basically, so EventID jumps from 37 to 39.
-				}
+				if _, ok := RoomList[key]; ok {
+					discord.EmbedError(s, i, discord.EmbedErrRoomNameDuplicated)
+				} else {
+					user := i.Member.User
+					filler := FillerList[user.ID]
 
-				RoomList[key] = room.New(EventList[idx], *i.Member.User, name, i.GuildID)
+					RoomList[key] = schema.NewRoom(i.GuildID, roomName, event, user)
 
-				err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-					Type: discordgo.InteractionResponseChannelMessageWithSource,
-					Data: &discordgo.InteractionResponseData{
-						Embeds: []*discordgo.MessageEmbed{
-							{
-								Title:     "Room Created",
-								Color:     discord.EmbedColor,
-								Timestamp: discord.EmbedTimestamp,
-								Footer:    discord.EmbedFooter(s),
-								Fields: []*discordgo.MessageEmbedField{
-									{
-										Name:  "Name",
-										Value: name,
-									},
-									{
-										Name:  "Event",
-										Value: EventList[idx].Name,
-									},
-									{
-										Name:  "Server",
-										Value: i.GuildID,
-									},
-									{
-										Name:  "Created By",
-										Value: i.Member.User.Username,
-									},
+					room := RoomList[key]
+					room.FillerList[user.ID] = &filler
+
+					err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+						Type: discordgo.InteractionResponseChannelMessageWithSource,
+						Data: &discordgo.InteractionResponseData{
+							Embeds: []*discordgo.MessageEmbed{
+								{
+									Title:       "Room Created - " + room.Name,
+									Description: "You can run /schedule to alter your availability.",
+									Color:       discord.EmbedColor,
+									Timestamp:   discord.EmbedTimestamp,
+									Footer:      discord.EmbedFooter(s),
+									Fields:      discord.RoomInfoFields(room),
 								},
 							},
 						},
-					},
-				})
-				if err != nil {
-					log.Fatal(err)
+					})
+					if err != nil {
+						log.Fatal(err)
+					}
+
+					// If fill-all is selected, add runner to all hour slots.
+					if fill {
+						for j := 0; j < len(room.Schedule); j++ {
+							room.Schedule[j] = append(room.Schedule[j], &filler)
+						}
+					}
+
+					// Backup room data.
+					room.Backup()
 				}
 			}
 
 		// Autocomplete
 		case discordgo.InteractionApplicationCommandAutocomplete:
-			data := i.ApplicationCommandData()
-			choices := []*discordgo.ApplicationCommandOptionChoice{}
-			var choice string
+			eventAutocomplete(s, i)
+		}
+	}
+}
 
-			switch data.Options[0].Name {
-			case "name":
-				choice = data.Options[1].StringValue()
-			case "event":
-				choice = data.Options[0].StringValue()
-			}
+func eventAutocomplete(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	data := i.ApplicationCommandData()
+	choices := []*discordgo.ApplicationCommandOptionChoice{}
+	var choice string
 
-			for _, v := range EventList {
-				if v.End > time.Now().UnixMilli() {
-					if ok, _ := regexp.MatchString("(?i)"+choice, v.Name); ok {
-						choices = append(choices, &discordgo.ApplicationCommandOptionChoice{
-							Name:  v.Name,
-							Value: strconv.Itoa(v.ID),
-						})
-					}
-				}
-			}
+	for j, v := range data.Options {
+		if v.Name == "event" {
+			choice = data.Options[j].StringValue()
+		}
+	}
 
-			// Max number of choice is 25.
-			if len(choices) > 25 {
-				choices = choices[:25]
-			}
-
-			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionApplicationCommandAutocompleteResult,
-				Data: &discordgo.InteractionResponseData{
-					Choices: choices,
-				},
-			})
-			if err != nil {
-				log.Fatal(err)
+	for _, v := range EventList {
+		if v.End > time.Now().UnixMilli() {
+			if ok, _ := regexp.MatchString("(?i)"+choice, v.Name); ok {
+				choices = append(choices, &discordgo.ApplicationCommandOptionChoice{
+					Name:  v.Name,
+					Value: v.Name,
+				})
 			}
 		}
+	}
+
+	// Max number of choice is 25.
+	if len(choices) > 25 {
+		choices = choices[:25]
+	}
+
+	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionApplicationCommandAutocompleteResult,
+		Data: &discordgo.InteractionResponseData{
+			Choices: choices,
+		},
+	})
+	if err != nil {
+		log.Fatal(err)
 	}
 }

@@ -9,7 +9,7 @@ var (
 
 func init() {
 	List = append(List, &discordgo.ApplicationCommand{
-		Name:        "scheduling",
+		Name:        "schedule",
 		Description: "Schedule your availability for a room in 1 hour block.",
 		Type:        discordgo.ChatApplicationCommand,
 		Options: []*discordgo.ApplicationCommandOption{

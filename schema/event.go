@@ -1,4 +1,4 @@
-package event
+package schema
 
 // Event defines Project Sekai event data.
 type Event struct {
@@ -7,8 +7,4 @@ type Event struct {
 	Type  string `json:"eventType"`
 	Start int64  `json:"startAt"`
 	End   int64  `json:"aggregateAt"`
-}
-
-func New() *Event {
-	return &Event{}
 }

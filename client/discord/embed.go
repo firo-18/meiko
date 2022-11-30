@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/firo-18/meiko/ghost"
+	"github.com/firo-18/meiko/schema"
 )
 
 var (
@@ -28,27 +28,27 @@ func NewEmbed(s *discordgo.Session) *discordgo.MessageEmbed {
 	}
 }
 
-func NewListEmbed(s *discordgo.Session, list map[string]*ghost.Ghost) []*discordgo.MessageEmbed {
-	return []*discordgo.MessageEmbed{
+func RoomInfoFields(room *schema.Room) []*discordgo.MessageEmbedField {
+	return []*discordgo.MessageEmbedField{
 		{
-			Title:     "List",
-			Color:     EmbedColor,
-			Timestamp: EmbedTimestamp,
-			Footer:    EmbedFooter(s),
-			Fields:    listFields(list),
+			Name:  "Server",
+			Value: StyleFieldValues(room.Server),
+		},
+		{
+			Name:  "Event",
+			Value: StyleFieldValues(room.Event.Name),
+		},
+		{
+			Name:  "Created By",
+			Value: StyleFieldValues(room.Owner.Username),
+		},
+		{
+			Name:  "Runner",
+			Value: StyleFieldValues(room.Runner),
+		},
+		{
+			Name:  "Fillers",
+			Value: StyleFieldValues(len(room.FillerList), " fillers signed up."),
 		},
 	}
-}
-
-func listFields(list map[string]*ghost.Ghost) []*discordgo.MessageEmbedField {
-	fields := []*discordgo.MessageEmbedField{}
-
-	for _, v := range list {
-		fields = append(fields, &discordgo.MessageEmbedField{
-			Name:   v.User.Username,
-			Value:  StyleFieldValues(v.SkillValue),
-			Inline: true,
-		})
-	}
-	return fields
 }
