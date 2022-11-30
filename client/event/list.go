@@ -57,7 +57,6 @@ func init() {
 									Fields:    discord.RoomInfoFields(room),
 								},
 							},
-							Flags: discordgo.MessageFlagsEphemeral,
 						},
 					})
 					if err != nil {

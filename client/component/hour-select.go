@@ -89,6 +89,9 @@ func init() {
 				log.Fatal(err)
 			}
 
+			// Log scheduling activities.
+			log.Printf("%v has updated their day %v schedule for room '%v' in guild '%v'.", user.Username, d+1, room.Name, i.GuildID)
+
 			// Backup room data.
 			room.Backup()
 		}

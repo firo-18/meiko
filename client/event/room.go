@@ -80,6 +80,9 @@ func init() {
 						}
 					}
 
+					// Log room creation activities.
+					log.Printf("%v created a room named '%v' in guild %v.", user.Username, roomName, i.GuildID)
+
 					// Backup room data.
 					room.Backup()
 				}

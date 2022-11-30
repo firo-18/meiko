@@ -14,7 +14,7 @@ var (
 
 // DeployProd deploys all commands into production discord bot.
 func DeployProduction() {
-	config := config.Load("config.json")
+	config := config.Load("config-meiko.json")
 
 	s, err := discordgo.New("Bot " + config.Token)
 	if err != nil {

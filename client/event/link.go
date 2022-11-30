@@ -86,6 +86,9 @@ func init() {
 				log.Fatal(err)
 			}
 
+			// Log link activities.
+			log.Printf("%v has linked to %v: %v %v", user.Username, s.State.User.String(), skillValue, offset)
+
 		// Autocomplete UTC offset.
 		case discordgo.InteractionApplicationCommandAutocomplete:
 			offsetAutocomplete(s, i)

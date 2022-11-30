@@ -40,6 +40,9 @@ func init() {
 					// Add filler to the room filler pool to keep track of who has offer support.
 					room.FillerList[filler.User.ID] = &filler
 
+					// Backup room data.
+					room.Backup()
+
 					// Event length in days.
 					daySum := room.EventLength/24 + 1
 
@@ -80,9 +83,6 @@ func init() {
 					if err != nil {
 						log.Fatal(err)
 					}
-
-					// Backup room data.
-					room.Backup()
 
 					time.Sleep(time.Minute * 5)
 

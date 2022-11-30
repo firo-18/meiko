@@ -5,7 +5,7 @@ import "github.com/bwmarrin/discordgo"
 func init() {
 	List = append(List, &discordgo.ApplicationCommand{
 		Name:        "list",
-		Description: "List all Ghostees who signed up as runners/fillers for the event.",
+		Description: "View room info and/or delete the room.",
 		Type:        discordgo.ChatApplicationCommand,
 		Options: []*discordgo.ApplicationCommandOption{
 			{
