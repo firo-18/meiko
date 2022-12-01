@@ -14,7 +14,7 @@ type Configuration struct {
 
 func Load(filename string) *Configuration {
 	config := Configuration{}
-	file, err := os.ReadFile(filename)
+	file, err := os.ReadFile("db/" + filename)
 	if err != nil {
 		log.Fatalln("read-file:", err)
 	}

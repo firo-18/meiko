@@ -40,8 +40,6 @@ func GetDecodeJSON(url string, eventList map[string]schema.Event) error {
 		if err != nil {
 			panic(err)
 		}
-		fmt.Printf("OK: event=%#v\n", event)
-
 		if time.Now().Before(time.UnixMilli(event.End)) {
 			eventList[event.Name] = event
 			log.Printf("Loaded event '%v' into event list.", event.Name)

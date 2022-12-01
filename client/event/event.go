@@ -37,16 +37,12 @@ func fetchEvents() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	// log.Println(EventList)
 }
 
-func errorRestart(err error) {
+func ErrExit(err error) {
 	log.Println("Client restarting due to error encountered:", err)
 	schema.SerializeRooms(RoomList)
 	schema.SerializeFillers(FillerList)
 
-	stop := make(chan os.Signal, 1)
-	<-stop
-
+	os.Exit(1)
 }

@@ -1,9 +1,8 @@
 # Configuration
 .DS_Store
-config*.json
 
 # Executables
 *.exe
 
-# Serialized Data
-*.gob
+# Serialized DB
+db/
