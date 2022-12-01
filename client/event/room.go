@@ -50,9 +50,7 @@ func init() {
 					filler := FillerList[user.ID]
 
 					RoomList[key] = schema.NewRoom(i.GuildID, roomName, event, user)
-
 					room := RoomList[key]
-					room.FillerList[user.ID] = &filler
 
 					err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 						Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -76,12 +74,12 @@ func init() {
 					// If fill-all is selected, add runner to all hour slots.
 					if fill {
 						for j := 0; j < len(room.Schedule); j++ {
-							room.Schedule[j] = append(room.Schedule[j], &filler)
+							room.Schedule[j] = append(room.Schedule[j], filler)
 						}
 					}
 
 					// Log room creation activities.
-					log.Printf("%v created a room named '%v' in guild %v.", user.Username, roomName, i.GuildID)
+					log.Printf("%v created a room named '%v' in guild %v.", user.String(), roomName, i.GuildID)
 
 					// Backup room data.
 					room.Backup()

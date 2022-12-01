@@ -1,6 +1,6 @@
 {
-	"key": "1001726129230598174 - TEST",
-	"name": "TEST",
+	"key": "1001726129230598174 - ANOTHER",
+	"name": "ANOTHER",
 	"server": "1001726129230598174",
 	"runner": "Arawn",
 	"event": {
@@ -11,32 +11,6 @@
 		"aggregateAt": 1670561999000
 	},
 	"length": 222,
-	"fillerList": {
-		"190746395366391809": {
-			"user": {
-				"id": "190746395366391809",
-				"email": "",
-				"username": "Arawn",
-				"avatar": "cbea8c54ce0922758595a6925cb7ed91",
-				"locale": "",
-				"discriminator": "7299",
-				"token": "",
-				"verified": false,
-				"mfa_enabled": false,
-				"banner": "",
-				"accent_color": 0,
-				"bot": false,
-				"public_flags": 4194304,
-				"premium_type": 0,
-				"system": false,
-				"flags": 0
-			},
-			"skillValue": 3.19,
-			"offset": -5,
-			"createdAt": "2022-11-30T13:45:56.175475+07:00",
-			"lastModified": "2022-11-30T13:45:56.175476+07:00"
-		}
-	},
 	"schedule": [
 		[
 			{
@@ -5829,5 +5803,5 @@
 		"system": false,
 		"flags": 0
 	},
-	"createAt": "2022-11-30T16:04:51.161112+07:00"
+	"createAt": "2022-12-01T07:49:53.79818+07:00"
 }

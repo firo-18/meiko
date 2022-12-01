@@ -6,6 +6,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/firo-18/meiko/client/discord"
+	"github.com/firo-18/meiko/schema"
 )
 
 func init() {
@@ -40,7 +41,7 @@ func init() {
 						log.Fatal(err)
 					}
 					delete(RoomList, key)
-					err = os.Remove("./db/rooms/" + room.Key + ".gob")
+					err = os.Remove(schema.PathRoomDB + room.Key + ".gob")
 					if err != nil {
 						log.Fatal(err)
 					}
@@ -62,6 +63,8 @@ func init() {
 					if err != nil {
 						log.Fatal(err)
 					}
+
+					log.Printf("%v has deleted the room '%v' from guild '%v'.", user.String(), room.Name, room.Server)
 				} else {
 					err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 						Type: discordgo.InteractionResponseChannelMessageWithSource,

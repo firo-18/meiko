@@ -37,12 +37,6 @@ func init() {
 						return
 					}
 
-					// Add filler to the room filler pool to keep track of who has offer support.
-					room.FillerList[filler.User.ID] = &filler
-
-					// Backup room data.
-					room.Backup()
-
 					// Event length in days.
 					daySum := room.EventLength/24 + 1
 
@@ -81,7 +75,7 @@ func init() {
 						},
 					})
 					if err != nil {
-						log.Fatal(err)
+						errorRestart(err)
 					}
 
 					time.Sleep(time.Minute * 5)
@@ -91,7 +85,7 @@ func init() {
 					})
 
 					if err != nil {
-						log.Fatalln("interaction-respond:", err)
+						errorRestart(err)
 					}
 				}
 			}
@@ -165,7 +159,7 @@ func DaySelectMenu(room *schema.Room, days, offset int) []discordgo.SelectMenuOp
 			options = append(options, discordgo.SelectMenuOption{
 				Label:       fmt.Sprint("Day ", d+1),
 				Value:       fmt.Sprint(room.Key, "_", d),
-				Description: "Start from " + time.UnixMilli(room.Event.Start).Add(time.Hour*24*time.Duration(d)).Add(time.Hour*time.Duration(offset)).UTC().Format(discord.TimeOutputFormat) + " offset time.",
+				Description: "Start from " + time.UnixMilli(room.Event.Start).Add(time.Hour*24*time.Duration(d)).Add(time.Hour*time.Duration(offset*-1)).UTC().Format(discord.TimeOutputFormat) + " offset time.",
 			})
 		}
 	}

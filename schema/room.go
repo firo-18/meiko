@@ -17,16 +17,15 @@ const (
 
 // Room lists all the scheduling and user data for tiering.
 type Room struct {
-	Key         string             `json:"key"`
-	Name        string             `json:"name"`
-	Server      string             `json:"server"`
-	Runner      string             `json:"runner"`
-	Event       Event              `json:"event"`
-	EventLength int                `json:"length"`
-	FillerList  map[string]*Filler `json:"fillerList"`
-	Schedule    [][]*Filler        `json:"schedule"`
-	Owner       discordgo.User     `json:"owner"`
-	CreateAt    time.Time          `json:"createAt"`
+	Key         string         `json:"key"`
+	Name        string         `json:"name"`
+	Server      string         `json:"server"`
+	Runner      string         `json:"runner"`
+	Event       Event          `json:"event"`
+	EventLength int            `json:"length"`
+	Schedule    [][]*Filler    `json:"schedule"`
+	Owner       discordgo.User `json:"owner"`
+	CreateAt    time.Time      `json:"createAt"`
 }
 
 func NewRoom(guildID, name string, event Event, owner *discordgo.User) *Room {
@@ -39,7 +38,6 @@ func NewRoom(guildID, name string, event Event, owner *discordgo.User) *Room {
 		EventLength: length,
 		Owner:       *owner,
 		Runner:      owner.Username,
-		FillerList:  make(map[string]*Filler),
 		Schedule:    make([][]*Filler, length),
 		CreateAt:    time.Now(),
 	}
@@ -47,12 +45,8 @@ func NewRoom(guildID, name string, event Event, owner *discordgo.User) *Room {
 
 // Backup encodes room data to a local gob file. Use for persistently update room data.
 func (r *Room) Backup() error {
-	path := "./db/rooms/"
-	if err := os.MkdirAll(path, os.ModePerm); err != nil {
-		log.Fatal(err)
-	}
-
-	file, err := os.OpenFile(path+r.Key+".gob", os.O_CREATE|os.O_RDWR, 0640)
+	filename := PathRoomDB + r.Key + ".gob"
+	file, err := os.OpenFile(filename, os.O_CREATE|os.O_RDWR, 0640)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -62,24 +56,23 @@ func (r *Room) Backup() error {
 	if err := enc.Encode(r); err != nil {
 		return err
 	}
-	log.Print("Successfully encode room to local file.")
 	return nil
 }
 
 func (r *Room) Archive() error {
-	path := "./db/rooms/"
-
 	data, err := json.MarshalIndent(r, "", "\t")
 	if err != nil {
 		return err
 	}
 
-	err = os.WriteFile(path+r.Key+".json", data, 0640)
+	filename := PathRoomArchive + r.Key + " - " + r.CreateAt.String() + ".json"
+	err = os.WriteFile(filename, data, 0640)
 	return err
 }
 
 func SerializeRooms(rooms map[string]*Room) {
-	f, err := os.Create("rooms.gob")
+	filename := PathDB + "rooms.gob"
+	f, err := os.Create(filename)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -94,7 +87,8 @@ func SerializeRooms(rooms map[string]*Room) {
 }
 
 func DeserializeRooms(rooms *map[string]*Room) {
-	f, err := os.OpenFile("rooms.gob", os.O_RDONLY|os.O_CREATE, 0640)
+	filename := PathDB + "rooms.gob"
+	f, err := os.OpenFile(filename, os.O_RDONLY|os.O_CREATE, 0640)
 	if err != nil {
 		log.Fatal(err)
 	}

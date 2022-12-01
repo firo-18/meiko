@@ -34,11 +34,11 @@ func init() {
 				Type: discordgo.InteractionResponseUpdateMessage,
 				Data: &discordgo.InteractionResponseData{
 					Embeds:     scheduleEmbeds(s, room, d, filler.Offset),
-					Components: scheduleComponent(&filler, room, d),
+					Components: scheduleComponent(filler, room, d),
 				},
 			})
 			if err != nil {
-				log.Fatal(err)
+				log.Println(err)
 			}
 		}
 	}
@@ -47,7 +47,7 @@ func init() {
 func scheduleEmbeds(s *discordgo.Session, room *schema.Room, d, offset int) []*discordgo.MessageEmbed {
 	embeds := []*discordgo.MessageEmbed{
 		{
-			Title:     fmt.Sprint("Schedule - Day ", d+1),
+			Title:     fmt.Sprint("[Day ", d+1, "] Room - ", room.Name),
 			Color:     discord.EmbedColor,
 			Timestamp: discord.EmbedTimestamp,
 			Footer:    discord.EmbedFooter(s),
@@ -77,7 +77,7 @@ func scheduleEmbedFields(room *schema.Room, d, offset int) []*discordgo.MessageE
 		if value == "" {
 			value = "-"
 		}
-		timeOutput := eventTime.Add(time.Hour * time.Duration(offset)).UTC().Format(discord.TimeOutputFormat)
+		timeOutput := eventTime.Add(time.Hour * time.Duration(offset*-1)).UTC().Format(discord.TimeOutputFormat)
 		fields = append(fields, &discordgo.MessageEmbedField{
 			Name:   fmt.Sprint("Hour ", h, " - ", timeOutput),
 			Value:  discord.StyleFieldValues(value),
@@ -135,7 +135,7 @@ func scheduleComponentMenuOption(filler *schema.Filler, room *schema.Room, d int
 			continue
 		}
 
-		timeOutput := eventTime.Add(time.Hour * time.Duration(filler.Offset)).UTC().Format(discord.TimeOutputFormat)
+		timeOutput := eventTime.Add(time.Hour * time.Duration(filler.Offset*-1)).UTC().Format(discord.TimeOutputFormat)
 
 		_, shift := hasShift(filler.User.ID, room.Key, h)
 

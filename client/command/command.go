@@ -8,8 +8,9 @@ import (
 )
 
 var (
-	List = []*discordgo.ApplicationCommand{}
-	// permissionManageServer int64 = discordgo.PermissionManageServer
+	List                         = []*discordgo.ApplicationCommand{}
+	Private                      = []*discordgo.ApplicationCommand{}
+	permissionManageServer int64 = discordgo.PermissionManageServer
 )
 
 // DeployProd deploys all commands into production discord bot.
@@ -25,7 +26,15 @@ func DeployProduction() {
 	if err != nil {
 		log.Fatalln("Cannot create commands:", err)
 	}
-	log.Printf("Deployed %v slash production commands successfully to all servers.", len(registeredCommands))
+	log.Printf("Deployed %v slash public commands successfully to production.", len(registeredCommands))
+
+	for _, pc := range Private {
+		cmd, err := s.ApplicationCommandCreate(config.ClientID, config.GuildID, pc)
+		if err != nil {
+			log.Fatalln("Cannot create commands:", err)
+		}
+		log.Printf("Deploy private command '%v' to production.", cmd.Name)
+	}
 }
 
 // DeployProd deploys all commands into production discord bot.
@@ -41,5 +50,13 @@ func DeployTest() {
 	if err != nil {
 		log.Fatalln("Cannot create commands:", err)
 	}
-	log.Printf("Deployed %v slash test commands successfully to test server.", len(registeredCommands))
+	log.Printf("Deployed %v slash public commands successfully to development.", len(registeredCommands))
+
+	for _, pc := range Private {
+		cmd, err := s.ApplicationCommandCreate(config.ClientID, config.GuildID, pc)
+		if err != nil {
+			log.Fatalln("Cannot create commands:", err)
+		}
+		log.Printf("Deploy private command '%v' to development.", cmd.Name)
+	}
 }

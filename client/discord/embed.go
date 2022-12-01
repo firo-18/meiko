@@ -46,9 +46,5 @@ func RoomInfoFields(room *schema.Room) []*discordgo.MessageEmbedField {
 			Name:  "Runner",
 			Value: StyleFieldValues(room.Runner),
 		},
-		{
-			Name:  "Fillers",
-			Value: StyleFieldValues(len(room.FillerList), " fillers signed up."),
-		},
 	}
 }

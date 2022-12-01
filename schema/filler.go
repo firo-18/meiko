@@ -19,8 +19,8 @@ type Filler struct {
 }
 
 // New takes constructs a new Ghost with initial values from a discordgo.User input and return its address.
-func NewFiller(user *discordgo.User, skill float64, offset int) Filler {
-	return Filler{
+func NewFiller(user *discordgo.User, skill float64, offset int) *Filler {
+	return &Filler{
 		User:         *user,
 		SkillValue:   skill,
 		Offset:       offset,
@@ -29,8 +29,25 @@ func NewFiller(user *discordgo.User, skill float64, offset int) Filler {
 	}
 }
 
-func SerializeFillers(fillers map[string]Filler) {
-	f, err := os.Create("fillers.gob")
+// Backup encodes filler data to a local gob file. Use for persistently backup filler data.
+func (f *Filler) Backup() error {
+	filename := PathFillerDB + f.User.String() + ".gob"
+	file, err := os.OpenFile(filename, os.O_CREATE|os.O_RDWR, 0640)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	enc := gob.NewEncoder(file)
+	if err := enc.Encode(f); err != nil {
+		return err
+	}
+	return nil
+}
+
+func SerializeFillers(fillers map[string]*Filler) {
+	filename := PathDB + "fillers.gob"
+	f, err := os.Create(filename)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -44,8 +61,10 @@ func SerializeFillers(fillers map[string]Filler) {
 	log.Println("Success: Fillers data has been serialized.")
 }
 
-func DeserializeFillers(fillers *map[string]Filler) {
-	f, err := os.OpenFile("fillers.gob", os.O_RDONLY|os.O_CREATE, 0640)
+func DeserializeFillers(fillers *map[string]*Filler) {
+	filename := PathDB + "fillers.gob"
+
+	f, err := os.OpenFile(filename, os.O_RDONLY|os.O_CREATE, 0640)
 	if err != nil {
 		log.Fatal(err)
 	}

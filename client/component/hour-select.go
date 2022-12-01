@@ -22,7 +22,7 @@ func init() {
 			room := event.RoomList[key]
 
 			user := i.Member.User
-			filler := room.FillerList[user.ID]
+			filler := event.FillerList[user.ID]
 
 			d, _ := strconv.Atoi(args[1])
 
@@ -86,11 +86,11 @@ func init() {
 			})
 
 			if err != nil {
-				log.Fatal(err)
+				log.Println(err)
 			}
 
 			// Log scheduling activities.
-			log.Printf("%v has updated their day %v schedule for room '%v' in guild '%v'.", user.Username, d+1, room.Name, i.GuildID)
+			log.Printf("%v has updated their day %v schedule for room '%v' in guild '%v'.", user.String(), d+1, room.Name, i.GuildID)
 
 			// Backup room data.
 			room.Backup()

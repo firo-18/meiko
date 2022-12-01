@@ -2,6 +2,7 @@ package event
 
 import (
 	"log"
+	"os"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/firo-18/meiko/api"
@@ -11,7 +12,7 @@ import (
 var (
 	List       = make(map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate))
 	EventList  = make(map[string]schema.Event)
-	FillerList = make(map[string]schema.Filler)
+	FillerList = make(map[string]*schema.Filler)
 	RoomList   = make(map[string]*schema.Room)
 )
 
@@ -31,4 +32,14 @@ func fetchEvents() {
 	}
 
 	// log.Println(EventList)
+}
+
+func errorRestart(err error) {
+	log.Println("Client restarting due to error encountered:", err)
+	schema.SerializeRooms(RoomList)
+	schema.SerializeFillers(FillerList)
+
+	stop := make(chan os.Signal, 1)
+	<-stop
+
 }
