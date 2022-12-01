@@ -17,6 +17,13 @@ var (
 )
 
 func init() {
+	// Mkdir all neccessary path
+	if err := os.MkdirAll(schema.PathRoomArchive, os.ModePerm); err != nil {
+		log.Fatal(err)
+	}
+	if err := os.MkdirAll(schema.PathFillerDB, os.ModePerm); err != nil {
+		log.Fatal(err)
+	}
 
 	schema.DeserializeRooms(&RoomList)
 	schema.DeserializeFillers(&FillerList)
