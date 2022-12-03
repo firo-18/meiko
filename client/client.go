@@ -18,7 +18,7 @@ var (
 )
 
 func init() {
-	cfx := config.Load("config.json")
+	cfx := config.Load("config-meiko.json")
 
 	var err error
 	s, err = discordgo.New("Bot " + cfx.Token)

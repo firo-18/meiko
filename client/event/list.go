@@ -81,7 +81,7 @@ func init() {
 							Flags: discordgo.MessageFlagsEphemeral,
 						},
 					})
-					if err == nil {
+					if err != nil {
 						ErrExit(err)
 					}
 				}
