@@ -159,7 +159,7 @@ func DaySelectMenu(room *schema.Room, days, offset int) []discordgo.SelectMenuOp
 			options = append(options, discordgo.SelectMenuOption{
 				Label:       fmt.Sprint("Day ", d+1),
 				Value:       fmt.Sprint(room.Key, "_", d),
-				Description: "Start from " + time.UnixMilli(room.Event.Start).Add(time.Hour*24*time.Duration(d)).Add(time.Hour*time.Duration(offset*-1)).UTC().Format(discord.TimeOutputFormat) + " offset time.",
+				Description: "Start from " + time.UnixMilli(room.Event.Start).Add(time.Hour*24*time.Duration(d)).Add(time.Hour*time.Duration(offset)).UTC().Format(discord.TimeOutputFormat) + " offset time.",
 			})
 		}
 	}

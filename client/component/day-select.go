@@ -45,13 +45,17 @@ func init() {
 }
 
 func scheduleEmbeds(s *discordgo.Session, room *schema.Room, d, offset int) []*discordgo.MessageEmbed {
+	local := time.UnixMilli(room.Event.Start).Add(time.Hour * time.Duration(d))
+	off := local.Add(time.Hour * time.Duration(offset)).UTC().Format(discord.TimeOutputFormat)
+
 	embeds := []*discordgo.MessageEmbed{
 		{
-			Title:     fmt.Sprint("[Day ", d+1, "] Room - ", room.Name),
-			Color:     discord.EmbedColor,
-			Timestamp: discord.EmbedTimestamp,
-			Footer:    discord.EmbedFooter(s),
-			Fields:    scheduleEmbedFields(room, d, offset),
+			Title:       fmt.Sprint("[Day ", d+1, "] Room - ", room.Name),
+			Description: fmt.Sprintf("Local: <t:%v:f> | Offset: %v. If the two times are different, update your offset with /link.", local.Unix(), off),
+			Color:       discord.EmbedColor,
+			Timestamp:   discord.EmbedTimestamp,
+			Footer:      discord.EmbedFooter(s),
+			Fields:      scheduleEmbedFields(room, d, offset),
 		},
 	}
 
@@ -77,7 +81,7 @@ func scheduleEmbedFields(room *schema.Room, d, offset int) []*discordgo.MessageE
 		if value == "" {
 			value = "-"
 		}
-		timeOutput := eventTime.Add(time.Hour * time.Duration(offset*-1)).UTC().Format(discord.TimeOutputFormat)
+		timeOutput := eventTime.Add(time.Hour * time.Duration(offset)).UTC().Format(discord.TimeOutputFormat)
 		fields = append(fields, &discordgo.MessageEmbedField{
 			Name:   fmt.Sprint("Hour ", h, " - ", timeOutput),
 			Value:  discord.StyleFieldValues(value),
@@ -135,7 +139,7 @@ func scheduleComponentMenuOption(filler *schema.Filler, room *schema.Room, d int
 			continue
 		}
 
-		timeOutput := eventTime.Add(time.Hour * time.Duration(filler.Offset*-1)).UTC().Format(discord.TimeOutputFormat)
+		timeOutput := eventTime.Add(time.Hour * time.Duration(filler.Offset)).UTC().Format(discord.TimeOutputFormat)
 
 		_, shift := hasShift(filler.User.ID, room.Key, h)
 

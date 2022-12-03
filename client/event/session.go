@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -100,7 +101,7 @@ func init() {
 							if currTime.After(nextHourTime) {
 								continue
 							}
-							if nextHourTime.Sub(currTime) <= time.Duration(time.Minute*15) {
+							if nextHourTime.Sub(currTime) <= time.Duration(time.Minute*60) {
 								fillers := room.Schedule[h]
 								sort.SliceStable(fillers, func(i, j int) bool {
 									return fillers[i].SkillValue > fillers[j].SkillValue
@@ -127,11 +128,25 @@ func init() {
 									ErrExit(err)
 								}
 
+								roomOrderMention := []string{}
+								for _, f := range roomOrder {
+									roomOrderMention = append(roomOrderMention, f.User.Mention())
+								}
+
+								if role != nil {
+									roomOrderMention = append(roomOrderMention, role.Mention())
+								}
+
 								embed := discord.NewEmbed(s)
-								embed.Title = fmt.Sprintf("[Room: %v] Shift Check In: %v", room.Name, nextHourTime.Unix())
+								embed.Title = fmt.Sprintf("[Room: %v] Shift Check In: <t:%v:R>", room.Name, nextHourTime.Unix())
 								embed.Fields = fillerOrderFields(roomOrder, role)
 
-								_, err = s.ChannelMessageSendEmbed(i.ChannelID, embed)
+								embeds := []*discordgo.MessageEmbed{embed}
+
+								_, err := s.ChannelMessageSendComplex(i.ChannelID, &discordgo.MessageSend{
+									Content: strings.Join(roomOrderMention, " | "),
+									Embeds:  embeds,
+								})
 								if err != nil {
 									log.Println(err)
 									s.ChannelMessageSendEmbed(i.ChannelID, &discordgo.MessageEmbed{
@@ -166,7 +181,7 @@ func init() {
 				// Send follow up session ending message.
 				embeds := []*discordgo.MessageEmbed{
 					{
-						Title:       fmt.Sprintf("[Room: %v] Tiering Session Has Ended" + room.Name),
+						Title:       fmt.Sprintf("[Room: %v] Tiering Session Has Ended", room.Name),
 						Description: "Stop sending out check in messages.",
 						Color:       discord.EmbedColor,
 						Timestamp:   discord.EmbedTimestamp,
