@@ -22,13 +22,5 @@ func FieldStyle(inputs ...any) string {
 
 	s := strings.Join(outputs, "")
 
-	if !strings.ContainsAny(s, "[]()") {
-		return ">>> " + s
-	}
-	s = strings.ReplaceAll(s, "[", "**__")
-	s = strings.ReplaceAll(s, "]", "__**")
-	s = strings.ReplaceAll(s, "(", "**")
-	s = strings.ReplaceAll(s, ")", "**")
-
 	return ">>> " + s
 }

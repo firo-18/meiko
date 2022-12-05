@@ -69,11 +69,21 @@ func init() {
 						Data: &discordgo.InteractionResponseData{
 							Embeds: []*discordgo.MessageEmbed{
 								{
-									Title:       fmt.Sprintf("[Room: %v] Tiering Session Has Begun", room.Name),
+									Title:       "Tiering Session Has Begun",
 									Description: "Begin sending out check in message roughly 15 minutes before shift starts.",
 									Color:       discord.EmbedColor,
 									Timestamp:   discord.EmbedTimestamp,
 									Footer:      discord.EmbedFooter(s),
+									Fields: []*discordgo.MessageEmbedField{
+										{
+											Name:  "Room",
+											Value: discord.FieldStyle(room.Name),
+										},
+										{
+											Name:  "Event",
+											Value: discord.FieldStyle(room.Event.Name, "(", room.Event.Type, ")"),
+										},
+									},
 								},
 							},
 						},
@@ -134,6 +144,8 @@ func init() {
 								for _, f := range roomOrder {
 									if _, ok := HasShift(f.User.ID, key, h-1); !ok || first {
 										roomOrderMention = append(roomOrderMention, f.User.Mention())
+									} else {
+										roomOrderMention = append(roomOrderMention, f.User.Username)
 									}
 								}
 
@@ -142,8 +154,8 @@ func init() {
 								}
 
 								embed := discord.NewEmbed(s)
-								embed.Title = fmt.Sprintf("[Room: %v] Shift Check In: <t:%v:R>", room.Name, nextHourTime.Unix())
-								embed.Description = fmt.Sprintf("Event: %v - %v", room.Event.Name, room.Event.Type)
+								embed.Title = fmt.Sprintf("[Room: %v] Shift Start In: <t:%v:R>", room.Name, nextHourTime.Unix())
+								embed.Description = fmt.Sprintf("Event: %v (%v)", room.Event.Name, room.Event.Type)
 								embed.Fields = fillerOrderFields(roomOrder, role)
 
 								embeds := []*discordgo.MessageEmbed{embed}
@@ -163,6 +175,10 @@ func init() {
 								}
 								h++
 								first = false
+
+								// Log message sending activities.
+								log.Printf("Check in message has been sent for room: '%v', guild: '%v', event: '%v', players/role: %v.",
+									room.Name, i.GuildID, room.Event.Name, strings.Join(roomOrderMention, ", "))
 							}
 							time.Sleep(time.Minute)
 						}
@@ -186,11 +202,21 @@ func init() {
 				// Send follow up session ending message.
 				embeds := []*discordgo.MessageEmbed{
 					{
-						Title:       fmt.Sprintf("[Room: %v] Tiering Session Has Ended", room.Name),
+						Title:       "Tiering Session Has Ended",
 						Description: "Stop sending out check in messages.",
 						Color:       discord.EmbedColor,
 						Timestamp:   discord.EmbedTimestamp,
 						Footer:      discord.EmbedFooter(s),
+						Fields: []*discordgo.MessageEmbedField{
+							{
+								Name:  "Room",
+								Value: discord.FieldStyle(room.Name),
+							},
+							{
+								Name:  "Event",
+								Value: discord.FieldStyle(room.Event.Name, "(", room.Event.Type, ")"),
+							},
+						},
 					},
 				}
 				_, err = s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
@@ -217,7 +243,7 @@ func fillerOrderFields(fillers []*schema.Filler, role *discordgo.Role) []*discor
 	for i, v := range fillers {
 		fields = append(fields, &discordgo.MessageEmbedField{
 			Name:  fmt.Sprint("Player ", i+1),
-			Value: discord.FieldStyle(v.User.Mention(), " - ", v.SkillValue),
+			Value: discord.FieldStyle(fmt.Sprintf("%v - %v (%.2f)", v.User.Mention(), v.ISV, v.SkillValue)),
 		})
 	}
 

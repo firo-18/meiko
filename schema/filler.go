@@ -13,15 +13,17 @@ import (
 // Filler defines the type of data stores for each Filler.
 type Filler struct {
 	User         discordgo.User `json:"user"`
+	ISV          string         `json:"isv"`
 	SkillValue   float64        `json:"skillValue"`
 	Offset       int            `json:"offset"`
 	LastModified time.Time      `json:"lastModified"`
 }
 
 // New takes constructs a new Ghost with initial values from a discordgo.User input and return its address.
-func NewFiller(user *discordgo.User, skill float64, offset int) *Filler {
+func NewFiller(user *discordgo.User, isv string, skill float64, offset int) *Filler {
 	return &Filler{
 		User:         *user,
+		ISV:          isv,
 		SkillValue:   skill,
 		Offset:       offset,
 		LastModified: time.Now(),

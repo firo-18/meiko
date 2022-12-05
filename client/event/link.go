@@ -32,6 +32,8 @@ func init() {
 				}
 			}
 
+			isv := fmt.Sprint(lead, "/", sum)
+
 			offsetNum, err := strconv.Atoi(offset)
 			if err != nil {
 				discord.EmbedError(s, i, discord.EmbedErrInvalidOffset)
@@ -47,7 +49,7 @@ func init() {
 			skillValue := (float64(sum-lead) * 0.002) + float64(lead)/100 + 1
 
 			// Add or update filler.
-			FillerList[user.ID] = schema.NewFiller(user, skillValue, offsetNum)
+			FillerList[user.ID] = schema.NewFiller(user, isv, skillValue, offsetNum)
 
 			err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -70,7 +72,7 @@ func init() {
 								},
 								{
 									Name:  "ISV",
-									Value: discord.FieldStyle(lead, "/", sum),
+									Value: discord.FieldStyle(isv),
 								},
 								{
 									Name:  "Skill Multiplier Value",

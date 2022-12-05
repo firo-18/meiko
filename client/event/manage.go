@@ -66,6 +66,8 @@ func init() {
 					// Add/update manager if a manager is selected.
 					if manager.ID != "" {
 						room.Manager = manager
+						// Log manager's changes.
+						log.Printf("%v changed the manager of room '%v' in guild %v to %v.", user.String(), room.Name, i.GuildID, manager.String())
 					}
 
 					err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
@@ -86,8 +88,6 @@ func init() {
 					if err != nil {
 						ErrExit(err)
 					}
-					// Log room creation activities.
-					log.Printf("%v managed a room named '%v' in guild %v.", user.String(), room.Name, i.GuildID)
 
 					// Backup room data.
 					// room.Backup()
