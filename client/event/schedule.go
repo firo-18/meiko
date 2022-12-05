@@ -164,3 +164,12 @@ func DaySelectMenu(room *schema.Room, days, offset int) []discordgo.SelectMenuOp
 	}
 	return options
 }
+
+func HasShift(userID, key string, hour int) (int, bool) {
+	for i, filler := range RoomList[key].Schedule[hour] {
+		if filler.User.ID == userID {
+			return i, true
+		}
+	}
+	return 0, false
+}

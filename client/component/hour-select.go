@@ -45,7 +45,7 @@ func init() {
 			if deleteAll {
 				// If only default is selected, deschedules all hours for the day.
 				for j := d * 24; j < (d+1)*24; j++ {
-					if shiftIdx, has := hasShift(user.ID, key, j); has {
+					if shiftIdx, has := event.HasShift(user.ID, key, j); has {
 						room.Schedule[j][shiftIdx] = room.Schedule[j][len(room.Schedule[j])-1]
 						room.Schedule[j] = room.Schedule[j][:len(room.Schedule[j])-1]
 					}
@@ -64,7 +64,7 @@ func init() {
 				}
 
 				for j := d * 24; j < (d+1)*24; j++ {
-					if shiftIdx, has := hasShift(user.ID, key, j); has {
+					if shiftIdx, has := event.HasShift(user.ID, key, j); has {
 						if !inShift(shifts, j) {
 							room.Schedule[j][shiftIdx] = room.Schedule[j][len(room.Schedule[j])-1]
 							room.Schedule[j] = room.Schedule[j][:len(room.Schedule[j])-1]

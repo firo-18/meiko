@@ -141,7 +141,7 @@ func scheduleComponentMenuOption(filler *schema.Filler, room *schema.Room, d int
 
 		timeOutput := eventTime.Add(time.Hour * time.Duration(filler.Offset)).UTC().Format(discord.TimeOutputFormat)
 
-		_, shift := hasShift(filler.User.ID, room.Key, h)
+		_, shift := event.HasShift(filler.User.ID, room.Key, h)
 
 		options = append(options, discordgo.SelectMenuOption{
 			Label:       timeOutput,
@@ -152,13 +152,4 @@ func scheduleComponentMenuOption(filler *schema.Filler, room *schema.Room, d int
 	}
 
 	return options
-}
-
-func hasShift(userID, key string, hour int) (int, bool) {
-	for i, filler := range event.RoomList[key].Schedule[hour] {
-		if filler.User.ID == userID {
-			return i, true
-		}
-	}
-	return 0, false
 }

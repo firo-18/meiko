@@ -85,6 +85,7 @@ func init() {
 					// Log session activities
 					log.Printf("%v started a session for room '%v' in guild %v.", user.String(), room.Name, i.GuildID)
 
+					first := true
 					h := 0
 					for h < len(room.Schedule) {
 						chMu.mu.Lock()
@@ -131,7 +132,9 @@ func init() {
 
 								roomOrderMention := []string{}
 								for _, f := range roomOrder {
-									roomOrderMention = append(roomOrderMention, f.User.Mention())
+									if _, ok := HasShift(f.User.ID, key, h-1); !ok || first {
+										roomOrderMention = append(roomOrderMention, f.User.Mention())
+									}
 								}
 
 								if role != nil {
@@ -159,6 +162,7 @@ func init() {
 									ErrExit(err)
 								}
 								h++
+								first = false
 							}
 							time.Sleep(time.Minute)
 						}
