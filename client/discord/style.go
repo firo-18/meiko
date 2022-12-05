@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-func StyleFieldValues(inputs ...any) string {
+func FieldStyle(inputs ...any) string {
 	outputs := make([]string, len(inputs))
 	for _, i := range inputs {
 		switch i := i.(type) {

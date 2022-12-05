@@ -4,8 +4,8 @@ import "github.com/bwmarrin/discordgo"
 
 func init() {
 	List = append(List, &discordgo.ApplicationCommand{
-		Name:        "list",
-		Description: "View room info and/or delete the room.",
+		Name:        "manage",
+		Description: "Manage a room. You can delete, set a manager, and general management.",
 		Type:        discordgo.ChatApplicationCommand,
 		Options: []*discordgo.ApplicationCommandOption{
 			{
@@ -14,6 +14,11 @@ func init() {
 				Type:         discordgo.ApplicationCommandOptionString,
 				Required:     true,
 				Autocomplete: true,
+			},
+			{
+				Name:        "manager",
+				Description: "Select a user to appoints them as the room manager. They will full access to the room.",
+				Type:        discordgo.ApplicationCommandOptionUser,
 			},
 			{
 				Name:        "delete-room",

@@ -20,11 +20,11 @@ type Room struct {
 	Key         string         `json:"key"`
 	Name        string         `json:"name"`
 	Server      string         `json:"server"`
-	Runner      string         `json:"runner"`
 	Event       Event          `json:"event"`
 	EventLength int            `json:"length"`
 	Schedule    [][]*Filler    `json:"schedule"`
 	Owner       discordgo.User `json:"owner"`
+	Manager     discordgo.User `json:"manager"`
 	CreateAt    time.Time      `json:"createAt"`
 }
 
@@ -37,39 +37,25 @@ func NewRoom(guildID, name string, event Event, owner *discordgo.User) *Room {
 		Event:       event,
 		EventLength: length,
 		Owner:       *owner,
-		Runner:      owner.Username,
+		Manager:     *owner,
 		Schedule:    make([][]*Filler, length),
 		CreateAt:    time.Now(),
 	}
 }
 
-// Backup encodes room data to a local gob file. Use for persistently update room data.
+// Backup writes room data to local json file for back up.
 func (r *Room) Backup() error {
-	filename := PathRoomDB + r.Key + ".gob"
-	file, err := os.OpenFile(filename, os.O_CREATE|os.O_RDWR, 0640)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer file.Close()
-
-	enc := gob.NewEncoder(file)
-	if err := enc.Encode(r); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (r *Room) Archive() error {
 	data, err := json.MarshalIndent(r, "", "\t")
 	if err != nil {
 		return err
 	}
 
-	filename := PathRoomArchive + r.Key + " - " + r.CreateAt.String() + ".json"
+	filename := PathRoomDB + r.Key + " - " + r.CreateAt.String() + ".json"
 	err = os.WriteFile(filename, data, 0640)
 	return err
 }
 
+// SerializeRooms encodes all rooms data into local a local gob file when client end, intentional or not.
 func SerializeRooms(rooms map[string]*Room) {
 	filename := PathDB + "rooms.gob"
 	f, err := os.Create(filename)
@@ -86,6 +72,7 @@ func SerializeRooms(rooms map[string]*Room) {
 	log.Println("Success: Rooms data has been serialized.")
 }
 
+// DeserializeRooms decodes rooms data when client starts from local gob file to memory.
 func DeserializeRooms(rooms *map[string]*Room) {
 	filename := PathDB + "rooms.gob"
 	f, err := os.OpenFile(filename, os.O_RDONLY|os.O_CREATE, 0640)

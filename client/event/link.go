@@ -62,19 +62,19 @@ func init() {
 							Fields: []*discordgo.MessageEmbedField{
 								{
 									Name:  "ID",
-									Value: discord.StyleFieldValues(user.ID),
+									Value: discord.FieldStyle(user.ID),
 								},
 								{
 									Name:  "UTC Offset",
-									Value: discord.StyleFieldValues(offset),
+									Value: discord.FieldStyle(offset),
 								},
 								{
 									Name:  "ISV",
-									Value: discord.StyleFieldValues(lead, "/", sum),
+									Value: discord.FieldStyle(lead, "/", sum),
 								},
 								{
 									Name:  "Skill Multiplier Value",
-									Value: discord.StyleFieldValues(skillValue),
+									Value: discord.FieldStyle(skillValue),
 								},
 							},
 						},
@@ -83,7 +83,7 @@ func init() {
 				},
 			})
 			if err != nil {
-				log.Fatal(err)
+				ErrExit(err)
 			}
 
 			// Backup filler data.
@@ -141,6 +141,6 @@ func offsetAutocomplete(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		},
 	})
 	if err != nil {
-		log.Fatal(err)
+		ErrExit(err)
 	}
 }

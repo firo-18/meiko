@@ -2,7 +2,6 @@ package event
 
 import (
 	"fmt"
-	"log"
 	"regexp"
 	"time"
 
@@ -57,15 +56,15 @@ func init() {
 										},
 										{
 											Name:  "Event",
-											Value: discord.StyleFieldValues(RoomList[key].Event.Name),
+											Value: discord.FieldStyle(RoomList[key].Event.Name),
 										},
 										{
 											Name:  "Start Time",
-											Value: discord.StyleFieldValues("<t:", room.Event.Start/1000, ">"),
+											Value: discord.FieldStyle("<t:", room.Event.Start/1000, ">"),
 										},
 										{
 											Name:  "Length",
-											Value: discord.StyleFieldValues(room.EventLength, " hours"),
+											Value: discord.FieldStyle(room.EventLength, " hours"),
 										},
 									},
 								},
@@ -125,7 +124,7 @@ func roomAutocomplete(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		},
 	})
 	if err != nil {
-		log.Fatal(err)
+		ErrExit(err)
 	}
 }
 

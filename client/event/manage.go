@@ -2,25 +2,27 @@ package event
 
 import (
 	"log"
-	"os"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/firo-18/meiko/client/discord"
-	"github.com/firo-18/meiko/schema"
 )
 
 func init() {
-	List["list"] = func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	List["manage"] = func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		switch i.Type {
 		case discordgo.InteractionApplicationCommand:
 			data := i.ApplicationCommandData()
 			var key string
+			var manager discordgo.User
 			var deleteRoom bool
+			user := i.Member.User
 
 			for _, option := range data.Options {
 				switch option.Name {
 				case "room":
 					key = option.StringValue()
+				case "manager":
+					manager = *option.UserValue(s)
 				case "delete-room":
 					deleteRoom = true
 				}
@@ -29,22 +31,17 @@ func init() {
 				discord.EmbedError(s, i, discord.EmbedErrRoom404)
 			} else {
 				if deleteRoom {
-					user := i.Member.User
-					if user.ID != room.Owner.ID {
+					if user.ID != room.Owner.ID && user.ID != room.Manager.ID {
 						discord.EmbedError(s, i, discord.EmbedErrInvalidOwner)
 						return
 					}
 
-					// Archives as json before deleting room.
-					err := room.Archive()
+					// Backup as json before deleting room.
+					err := room.Backup()
 					if err != nil {
-						log.Fatal(err)
+						ErrExit(err)
 					}
 					delete(RoomList, key)
-					err = os.Remove(schema.PathRoomDB + room.Key + ".gob")
-					if err != nil {
-						log.Fatal(err)
-					}
 
 					err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 						Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -61,11 +58,16 @@ func init() {
 						},
 					})
 					if err != nil {
-						log.Fatal(err)
+						ErrExit(err)
 					}
 
 					log.Printf("%v has deleted the room '%v' from guild '%v'.", user.String(), room.Name, room.Server)
 				} else {
+					// Add/update manager if a manager is selected.
+					if manager.ID != "" {
+						room.Manager = manager
+					}
+
 					err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 						Type: discordgo.InteractionResponseChannelMessageWithSource,
 						Data: &discordgo.InteractionResponseData{
@@ -84,6 +86,12 @@ func init() {
 					if err != nil {
 						ErrExit(err)
 					}
+					// Log room creation activities.
+					log.Printf("%v managed a room named '%v' in guild %v.", user.String(), room.Name, i.GuildID)
+
+					// Backup room data.
+					// room.Backup()
+
 				}
 			}
 

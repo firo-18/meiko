@@ -93,7 +93,7 @@ func init() {
 			log.Printf("%v has updated their day %v schedule for room '%v' in guild '%v'.", user.String(), d+1, room.Name, i.GuildID)
 
 			// Backup room data.
-			room.Backup()
+			// room.Backup()
 		}
 	}
 }

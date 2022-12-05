@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/firo-18/meiko/api"
 	"github.com/firo-18/meiko/schema"
 )
 
@@ -18,7 +17,7 @@ var (
 
 func init() {
 	// Mkdir all neccessary path
-	if err := os.MkdirAll(schema.PathRoomArchive, os.ModePerm); err != nil {
+	if err := os.MkdirAll(schema.PathRoomDB, os.ModePerm); err != nil {
 		log.Fatal(err)
 	}
 	if err := os.MkdirAll(schema.PathFillerDB, os.ModePerm); err != nil {
@@ -33,7 +32,7 @@ func init() {
 
 func fetchEvents() {
 	url := "https://raw.githubusercontent.com/Sekai-World/sekai-master-db-en-diff/main/events.json"
-	err := api.GetDecodeJSON(url, EventList)
+	err := schema.GetEventList(url, EventList)
 	if err != nil {
 		log.Fatal(err)
 	}

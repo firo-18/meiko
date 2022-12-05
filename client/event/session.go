@@ -45,8 +45,6 @@ func init() {
 				}
 			}
 
-			log.Println(role)
-
 			room, ok := RoomList[key]
 			if !ok {
 				discord.EmbedError(s, i, discord.EmbedErrRoom404)
@@ -84,8 +82,11 @@ func init() {
 						ErrExit(err)
 					}
 
-					hourIdx := 0
-					for h := hourIdx; h < len(room.Schedule); h++ {
+					// Log session activities
+					log.Printf("%v started a session for room '%v' in guild %v.", user.String(), room.Name, i.GuildID)
+
+					h := 0
+					for h < len(room.Schedule) {
 						chMu.mu.Lock()
 						select {
 						case <-chMu.quits[key]:
@@ -93,15 +94,15 @@ func init() {
 							return
 						default:
 							chMu.mu.Unlock()
-							log.Println("test", room.Name, h)
 							currTime := time.Now()
 							eventStartTime := time.UnixMilli(room.Event.Start)
 
 							nextHourTime := eventStartTime.Add(time.Hour * time.Duration(h))
 							if currTime.After(nextHourTime) {
+								h++
 								continue
 							}
-							if nextHourTime.Sub(currTime) <= time.Duration(time.Minute*60) {
+							if nextHourTime.Sub(currTime) <= time.Duration(time.Minute*15) {
 								fillers := room.Schedule[h]
 								sort.SliceStable(fillers, func(i, j int) bool {
 									return fillers[i].SkillValue > fillers[j].SkillValue
@@ -139,6 +140,7 @@ func init() {
 
 								embed := discord.NewEmbed(s)
 								embed.Title = fmt.Sprintf("[Room: %v] Shift Check In: <t:%v:R>", room.Name, nextHourTime.Unix())
+								embed.Description = fmt.Sprintf("Event: %v - %v", room.Event.Name, room.Event.Type)
 								embed.Fields = fillerOrderFields(roomOrder, role)
 
 								embeds := []*discordgo.MessageEmbed{embed}
@@ -148,16 +150,15 @@ func init() {
 									Embeds:  embeds,
 								})
 								if err != nil {
-									log.Println(err)
 									s.ChannelMessageSendEmbed(i.ChannelID, &discordgo.MessageEmbed{
 										Title:     fmt.Sprintf("[Room: %v] Tiering Session Has Ended Dues To Error", room.Name),
 										Color:     discord.EmbedColor,
 										Timestamp: discord.EmbedTimestamp,
 										Footer:    discord.EmbedFooter(s),
 									})
-									return
+									ErrExit(err)
 								}
-								hourIdx++
+								h++
 							}
 							time.Sleep(time.Minute)
 						}
@@ -194,6 +195,9 @@ func init() {
 				if err != nil {
 					ErrExit(err)
 				}
+
+				// Log session activities
+				log.Printf("%v ended the session for room '%v' in guild %v.", user.String(), room.Name, i.GuildID)
 			}
 
 		// Room Autocomplete
@@ -209,14 +213,14 @@ func fillerOrderFields(fillers []*schema.Filler, role *discordgo.Role) []*discor
 	for i, v := range fillers {
 		fields = append(fields, &discordgo.MessageEmbedField{
 			Name:  fmt.Sprint("Player ", i+1),
-			Value: discord.StyleFieldValues(v.User.Mention(), " - ", v.SkillValue),
+			Value: discord.FieldStyle(v.User.Mention(), " - ", v.SkillValue),
 		})
 	}
 
 	if len(fields) < 5 && role != nil {
 		fields = append(fields, &discordgo.MessageEmbedField{
 			Name:  "Asking For Additional Filler(s)",
-			Value: discord.StyleFieldValues(fmt.Sprintf("%v: (+%v)", role.Mention(), 5-len(fields))),
+			Value: discord.FieldStyle(fmt.Sprintf("%v: (+%v)", role.Mention(), 5-len(fields))),
 		})
 	}
 

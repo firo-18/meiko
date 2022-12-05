@@ -68,7 +68,7 @@ func init() {
 						},
 					})
 					if err != nil {
-						log.Fatal(err)
+						ErrExit(err)
 					}
 
 					// If fill-all is selected, add runner to all hour slots.
@@ -82,7 +82,7 @@ func init() {
 					log.Printf("%v created a room named '%v' in guild %v.", user.String(), roomName, i.GuildID)
 
 					// Backup room data.
-					room.Backup()
+					// room.Backup()
 				}
 			}
 
@@ -127,6 +127,6 @@ func eventAutocomplete(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		},
 	})
 	if err != nil {
-		log.Fatal(err)
+		ErrExit(err)
 	}
 }

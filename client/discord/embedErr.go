@@ -37,7 +37,7 @@ func EmbedError(s *discordgo.Session, i *discordgo.InteractionCreate, code int) 
 	case 7:
 		embed.Description = "Invalid offset. Select from the option, or enter an integer between -12 and 12, inclusive."
 	case 8:
-		embed.Description = "You are not the owner of this room. Only owner can delete the room."
+		embed.Description = "You are not the owner/manager of this room. Only owner/manager can alter the room."
 	}
 
 	embeds := []*discordgo.MessageEmbed{embed}

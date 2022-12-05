@@ -84,7 +84,7 @@ func scheduleEmbedFields(room *schema.Room, d, offset int) []*discordgo.MessageE
 		timeOutput := eventTime.Add(time.Hour * time.Duration(offset)).UTC().Format(discord.TimeOutputFormat)
 		fields = append(fields, &discordgo.MessageEmbedField{
 			Name:   fmt.Sprint("Hour ", h, " - ", timeOutput),
-			Value:  discord.StyleFieldValues(value),
+			Value:  discord.FieldStyle(value),
 			Inline: true,
 		})
 	}

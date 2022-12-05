@@ -32,19 +32,27 @@ func RoomInfoFields(room *schema.Room) []*discordgo.MessageEmbedField {
 	return []*discordgo.MessageEmbedField{
 		{
 			Name:  "Server",
-			Value: StyleFieldValues(room.Server),
+			Value: FieldStyle(room.Server),
 		},
 		{
 			Name:  "Event",
-			Value: StyleFieldValues(room.Event.Name),
+			Value: FieldStyle(room.Event.Name),
 		},
 		{
-			Name:  "Created By",
-			Value: StyleFieldValues(room.Owner.Username),
+			Name:  "Event Type",
+			Value: FieldStyle(room.Event.Type),
 		},
 		{
-			Name:  "Runner",
-			Value: StyleFieldValues(room.Runner),
+			Name:  "Event Length",
+			Value: FieldStyle(room.EventLength),
+		},
+		{
+			Name:  "Owner",
+			Value: FieldStyle(room.Owner.Username),
+		},
+		{
+			Name:  "Manager",
+			Value: FieldStyle(room.Manager.Username),
 		},
 	}
 }
