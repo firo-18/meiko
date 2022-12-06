@@ -41,16 +41,15 @@ func init() {
 				discord.EmbedError(s, i, discord.EmbedErrInvalidEvent)
 			} else {
 				roomName = strings.ToUpper(roomName)
-				key := i.GuildID + " - " + roomName
 
-				if _, ok := RoomList[key]; ok {
+				if _, ok := RoomList[i.GuildID][roomName]; ok {
 					discord.EmbedError(s, i, discord.EmbedErrRoomNameDuplicated)
 				} else {
 					user := i.Member.User
 					filler := FillerList[user.ID]
 
-					RoomList[key] = schema.NewRoom(i.GuildID, roomName, event, user)
-					room := RoomList[key]
+					RoomList[i.GuildID][roomName] = schema.NewRoom(i.GuildID, roomName, event, user)
+					room := RoomList[i.GuildID][roomName]
 
 					err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 						Type: discordgo.InteractionResponseChannelMessageWithSource,

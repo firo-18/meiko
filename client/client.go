@@ -10,7 +10,6 @@ import (
 	"github.com/firo-18/meiko/client/component"
 	"github.com/firo-18/meiko/client/config"
 	"github.com/firo-18/meiko/client/event"
-	"github.com/firo-18/meiko/schema"
 )
 
 var (
@@ -58,14 +57,6 @@ func Open() {
 
 	<-stop
 
-	close()
-
-}
-
-// close serialzes internal data to files before closing websocket and exit the program.
-func close() {
-	schema.SerializeRooms(event.RoomList)
-	schema.SerializeFillers(event.FillerList)
-
 	log.Println("Gracefully shutting down.")
+
 }

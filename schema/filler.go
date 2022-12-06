@@ -1,9 +1,7 @@
 package schema
 
 import (
-	"encoding/gob"
 	"encoding/json"
-	"log"
 	"os"
 	"time"
 
@@ -32,6 +30,20 @@ func NewFiller(user *discordgo.User, isv string, skill float64, offset int) *Fil
 	}
 }
 
+// RestoreFiller restores filler data from local file and returns the Filler's address.
+func RestoreFiller(filename string) (*Filler, error) {
+	file, err := os.ReadFile(PathFillerDB + filename)
+	if err != nil {
+		return nil, err
+	}
+	var f Filler
+	err = json.Unmarshal(file, &f)
+	if err != nil {
+		return nil, err
+	}
+	return &f, nil
+}
+
 // Backup writes filler data to local json file for back up.
 func (f *Filler) Backup() error {
 	data, err := json.MarshalIndent(f, "", "\t")
@@ -42,48 +54,4 @@ func (f *Filler) Backup() error {
 	filename := PathFillerDB + f.User.String() + ".json"
 	err = os.WriteFile(filename, data, 0640)
 	return err
-}
-
-// SerializeFillers encodes all fillers data into local a local gob file when client end, intentional or not.
-func SerializeFillers(fillers map[string]*Filler) {
-	filename := PathDB + "fillers.gob"
-	f, err := os.Create(filename)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer f.Close()
-
-	data := gob.NewEncoder(f)
-	err = data.Encode(fillers)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Println("Success: Fillers data has been serialized.")
-}
-
-// DeserializeFillers decodes fillers data when client starts from local gob file to memory.
-func DeserializeFillers(fillers *map[string]*Filler) {
-	filename := PathDB + "fillers.gob"
-
-	f, err := os.OpenFile(filename, os.O_RDONLY|os.O_CREATE, 0640)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer f.Close()
-
-	stat, err := f.Stat()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if stat.Size() == 0 {
-		return
-	}
-
-	data := gob.NewDecoder(f)
-	err = data.Decode(fillers)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Println("Success: Fillers data has been deserialized.")
 }

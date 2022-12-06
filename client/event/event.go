@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/firo-18/meiko/db"
 	"github.com/firo-18/meiko/schema"
 )
 
@@ -12,7 +13,7 @@ var (
 	List       = make(map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate))
 	EventList  = make(map[string]schema.Event)
 	FillerList = make(map[string]*schema.Filler)
-	RoomList   = make(map[string]*schema.Room)
+	RoomList   = make(map[string]map[string]*schema.Room)
 )
 
 func init() {
@@ -24,8 +25,18 @@ func init() {
 		log.Fatal(err)
 	}
 
-	schema.DeserializeRooms(&RoomList)
-	schema.DeserializeFillers(&FillerList)
+	var err error
+	RoomList, err = db.FetchRoomList()
+	if err != nil {
+		ErrExit(err)
+	}
+
+	FillerList, err = db.FetchFillers()
+	if err != nil {
+		ErrExit(err)
+	}
+
+	log.Println(FillerList, RoomList)
 
 	go fetchEvents()
 }
@@ -40,8 +51,6 @@ func fetchEvents() {
 
 func ErrExit(err error) {
 	log.Println("Client restarting due to error encountered:", err)
-	schema.SerializeRooms(RoomList)
-	schema.SerializeFillers(FillerList)
 
 	os.Exit(1)
 }
