@@ -2,6 +2,7 @@ package event
 
 import (
 	"log"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/firo-18/meiko/client/discord"
@@ -70,19 +71,28 @@ func init() {
 						log.Printf("%v changed the manager of room '%v' in guild %v to %v.", user.String(), room.Name, i.GuildID, manager.String())
 					}
 
+					filler, ok := FillerList[user.ID]
+					if !ok {
+						discord.EmbedError(s, i, discord.EmbedErrInvalidFiller)
+						return
+					}
+
+					days := room.EventLength/24 + 1
+
 					err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 						Type: discordgo.InteractionResponseChannelMessageWithSource,
 						Data: &discordgo.InteractionResponseData{
 							Embeds: []*discordgo.MessageEmbed{
 								{
-									Title:     "Viewing Room Info - " + room.Name,
+									Title:     "Managing Room - " + room.Name,
 									Color:     discord.EmbedColor,
 									Timestamp: discord.EmbedTimestamp,
 									Footer:    discord.EmbedFooter(s),
 									Fields:    discord.RoomInfoFields(room),
 								},
 							},
-							Flags: discordgo.MessageFlagsEphemeral,
+							Components: ScheduleDayComponent(room, days, filler.Offset),
+							Flags:      discordgo.MessageFlagsEphemeral,
 						},
 					})
 					if err != nil {
@@ -91,6 +101,16 @@ func init() {
 
 					// Backup room data.
 					// room.Backup()
+
+					time.Sleep(time.Minute * 5)
+
+					_, err = s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+						Components: &[]discordgo.MessageComponent{},
+					})
+
+					if err != nil {
+						ErrExit(err)
+					}
 
 				}
 			}

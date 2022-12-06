@@ -17,6 +17,7 @@ type Filler struct {
 	SkillValue   float64        `json:"skillValue"`
 	Offset       int            `json:"offset"`
 	LastModified time.Time      `json:"lastModified"`
+	CreatedAt    time.Time      `json:"createdAt"`
 }
 
 // New takes constructs a new Ghost with initial values from a discordgo.User input and return its address.
@@ -27,6 +28,7 @@ func NewFiller(user *discordgo.User, isv string, skill float64, offset int) *Fil
 		SkillValue:   skill,
 		Offset:       offset,
 		LastModified: time.Now(),
+		CreatedAt:    time.Now(),
 	}
 }
 

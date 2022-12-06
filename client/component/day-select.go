@@ -2,7 +2,6 @@ package component
 
 import (
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -24,7 +23,7 @@ func init() {
 			day := args[1]
 			d, err := strconv.Atoi(day)
 			if err != nil {
-				log.Fatal(err)
+				event.ErrExit(err)
 			}
 
 			filler := event.FillerList[i.Member.User.ID]
@@ -34,11 +33,11 @@ func init() {
 				Type: discordgo.InteractionResponseUpdateMessage,
 				Data: &discordgo.InteractionResponseData{
 					Embeds:     scheduleEmbeds(s, room, d, filler.Offset),
-					Components: scheduleComponent(filler, room, d),
+					Components: scheduleComponent(i, filler, room, d),
 				},
 			})
 			if err != nil {
-				log.Println(err)
+				event.ErrExit(err)
 			}
 		}
 	}
@@ -92,27 +91,34 @@ func scheduleEmbedFields(room *schema.Room, d, offset int) []*discordgo.MessageE
 	return fields
 }
 
-func scheduleComponent(filler *schema.Filler, room *schema.Room, d int) []discordgo.MessageComponent {
-	maxOption := 1
+func scheduleComponent(i *discordgo.InteractionCreate, filler *schema.Filler, room *schema.Room, d int) []discordgo.MessageComponent {
 
-	startTime := time.UnixMilli(room.Event.Start)
+	menu := discordgo.SelectMenu{
+		CustomID:    "hour-select",
+		Placeholder: "Select your available hours.",
+		Options:     scheduleComponentMenuOption(i, filler, room, d),
+	}
+	switch i.Message.Interaction.Name {
+	case "schedule":
+		maxOption := 1
+		startTime := time.UnixMilli(room.Event.Start)
 
-	for h := d * 24; h < (d+1)*24 && h < len(room.Schedule); h++ {
-		if startTime.Add(time.Hour * time.Duration(h)).After(time.Now()) {
-			maxOption++
+		for h := d * 24; h < (d+1)*24 && h < len(room.Schedule); h++ {
+			if startTime.Add(time.Hour * time.Duration(h)).After(time.Now()) {
+				maxOption++
+			}
 		}
+		menu.MaxValues = maxOption
+		menu.Disabled = maxOption == 1
+	case "manage":
+		menu.CustomID = "hour-manage"
+		menu.MaxValues = 1
 	}
 
 	components := []discordgo.MessageComponent{
 		discordgo.ActionsRow{
 			Components: []discordgo.MessageComponent{
-				discordgo.SelectMenu{
-					CustomID:    "hour-select",
-					Placeholder: "Select your available hours.",
-					MaxValues:   maxOption,
-					Options:     scheduleComponentMenuOption(filler, room, d),
-					Disabled:    maxOption == 1,
-				},
+				menu,
 			},
 		},
 	}
@@ -120,14 +126,23 @@ func scheduleComponent(filler *schema.Filler, room *schema.Room, d int) []discor
 	return components
 }
 
-func scheduleComponentMenuOption(filler *schema.Filler, room *schema.Room, d int) []discordgo.SelectMenuOption {
-	options := []discordgo.SelectMenuOption{
-		{
+func scheduleComponentMenuOption(i *discordgo.InteractionCreate, filler *schema.Filler, room *schema.Room, d int) []discordgo.SelectMenuOption {
+	options := []discordgo.SelectMenuOption{}
+	switch i.Message.Interaction.Name {
+	case "schedule":
+		options = append(options, discordgo.SelectMenuOption{
 			Label:       "Deselect All",
 			Value:       fmt.Sprint(room.Key, "_", d, "_", d*24, "_", "deselect"),
-			Description: "Useful for when deselecting all hours .",
+			Description: "Useful for when deselecting all hours.",
 			Default:     false,
-		},
+		})
+	case "manage":
+		options = append(options, discordgo.SelectMenuOption{
+			Label:       "Back",
+			Value:       fmt.Sprint(room.Key, "_", d, "_", d*24, "_", "back"),
+			Description: "Go back to the previous options.",
+			Default:     false,
+		})
 	}
 
 	startTime := time.UnixMilli(room.Event.Start)
@@ -141,14 +156,26 @@ func scheduleComponentMenuOption(filler *schema.Filler, room *schema.Room, d int
 
 		timeOutput := eventTime.Add(time.Hour * time.Duration(filler.Offset)).UTC().Format(discord.TimeOutputFormat)
 
-		_, shift := event.HasShift(filler.User.ID, room.Key, h)
+		switch i.Message.Interaction.Name {
+		case "schedule":
+			_, shift := event.HasShift(filler.User.ID, room.Key, h)
 
-		options = append(options, discordgo.SelectMenuOption{
-			Label:       timeOutput,
-			Value:       fmt.Sprint(room.Key, "_", d, "_", h),
-			Description: "Your offset time. If different from local, update through /link.",
-			Default:     shift,
-		})
+			options = append(options, discordgo.SelectMenuOption{
+				Label:       timeOutput,
+				Value:       fmt.Sprint(room.Key, "_", d, "_", h),
+				Description: fmt.Sprint("Event Hour: ", h),
+				Default:     shift,
+			})
+		case "manage":
+			if len(room.Schedule[h]) > 0 {
+				options = append(options, discordgo.SelectMenuOption{
+					Label:       timeOutput,
+					Value:       fmt.Sprint(room.Key, "_", d, "_", h),
+					Description: fmt.Sprint("Event Hour: ", h),
+				})
+			}
+		}
+
 	}
 
 	return options

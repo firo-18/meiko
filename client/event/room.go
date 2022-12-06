@@ -82,7 +82,7 @@ func init() {
 					log.Printf("%v created a room named '%v' in guild %v.", user.String(), roomName, i.GuildID)
 
 					// Backup room data.
-					// room.Backup()
+					room.Backup()
 				}
 			}
 

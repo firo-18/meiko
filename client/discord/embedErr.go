@@ -50,6 +50,6 @@ func EmbedError(s *discordgo.Session, i *discordgo.InteractionCreate, code int) 
 		},
 	})
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 }

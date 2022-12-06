@@ -49,7 +49,20 @@ func init() {
 			skillValue := (float64(sum-lead) * 0.002) + float64(lead)/100 + 1
 
 			// Add or update filler.
-			FillerList[user.ID] = schema.NewFiller(user, isv, skillValue, offsetNum)
+			if filler, ok := FillerList[user.ID]; !ok {
+				FillerList[user.ID] = schema.NewFiller(user, isv, skillValue, offsetNum)
+
+				// Log link activities.
+				log.Printf("%v has linked to %v. ISV: %v (%v), Offset: %v.", user.String(), s.State.User.String(), isv, skillValue, offset)
+			} else {
+				filler.ISV = isv
+				filler.SkillValue = skillValue
+				filler.Offset = offsetNum
+				filler.LastModified = time.Now()
+
+				// Log link activities.
+				log.Printf("%v has updated to %v. ISV: %v (%v), Offset: %v.", user.String(), s.State.User.String(), isv, skillValue, offset)
+			}
 
 			err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -93,7 +106,7 @@ func init() {
 			filler.Backup()
 
 			// Log link activities.
-			log.Printf("%v has (re)linked to %v. ISV: %v, Offset: %v.", user.String(), s.State.User.String(), skillValue, offset)
+			log.Printf("%v has (re)linked to %v. ISV: %v (%v), Offset: %v.", user.String(), s.State.User.String(), isv, skillValue, offset)
 
 		// Autocomplete UTC offset.
 		case discordgo.InteractionApplicationCommandAutocomplete:
