@@ -48,6 +48,7 @@ func init() {
 			// Calculate skill multiplier from ISV.
 			skillValue := (float64(sum-lead) * 0.002) + float64(lead)/100 + 1
 
+			log.Println(FillerList)
 			// Add or update filler.
 			if filler, ok := FillerList[user.ID]; !ok {
 				FillerList[user.ID] = schema.NewFiller(user, isv, skillValue, offsetNum)
@@ -55,10 +56,13 @@ func init() {
 				// Log link activities.
 				log.Printf("%v has linked to %v. ISV: %v (%v), Offset: %v.", user.String(), s.State.User.String(), isv, skillValue, offset)
 			} else {
+				log.Println(user.ID, &filler)
 				filler.ISV = isv
 				filler.SkillValue = skillValue
 				filler.Offset = offsetNum
 				filler.LastModified = time.Now()
+
+				log.Println(&filler)
 
 				// Log link activities.
 				log.Printf("%v has updated to %v. ISV: %v (%v), Offset: %v.", user.String(), s.State.User.String(), isv, skillValue, offset)
@@ -104,9 +108,6 @@ func init() {
 			// Backup filler data.
 			filler := FillerList[user.ID]
 			filler.Backup()
-
-			// Log link activities.
-			log.Printf("%v has (re)linked to %v. ISV: %v (%v), Offset: %v.", user.String(), s.State.User.String(), isv, skillValue, offset)
 
 		// Autocomplete UTC offset.
 		case discordgo.InteractionApplicationCommandAutocomplete:

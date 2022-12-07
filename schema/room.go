@@ -15,29 +15,30 @@ const (
 
 // Room lists all the scheduling and user data for tiering.
 type Room struct {
-	Key         string         `json:"key"`
-	Name        string         `json:"name"`
-	Server      string         `json:"server"`
-	Event       Event          `json:"event"`
-	EventLength int            `json:"length"`
-	Owner       discordgo.User `json:"owner"`
-	Manager     discordgo.User `json:"manager"`
-	CreateAt    time.Time      `json:"createAt"`
-	Schedule    [][]*Filler    `json:"schedule"`
+	Key         string           `json:"key"`
+	Name        string           `json:"name"`
+	Guild       string           `json:"guild"`
+	Event       Event            `json:"event"`
+	EventLength int              `json:"length"`
+	Owner       discordgo.User   `json:"owner"`
+	Manager     discordgo.User   `json:"manager"`
+	CreateAt    time.Time        `json:"createAt"`
+	Schedule    [][]string       `json:"schedule"`
+	Fillers     []discordgo.User `json:"fillers"`
 }
 
 // NewRoom creates a new Room based on arguments, and return the Room's address.
 func NewRoom(guildID, name string, event Event, owner *discordgo.User) *Room {
 	length := int(event.End-event.Start+EventEndTimeOffset) / UnixMilliPerHour
 	return &Room{
-		Key:         guildID + " - " + name,
+		Key:         guildID + "_" + name,
 		Name:        name,
-		Server:      guildID,
+		Guild:       guildID,
 		Event:       event,
 		EventLength: length,
 		Owner:       *owner,
 		Manager:     *owner,
-		Schedule:    make([][]*Filler, length),
+		Schedule:    make([][]string, length),
 		CreateAt:    time.Now(),
 	}
 }
@@ -63,12 +64,12 @@ func (r *Room) Backup() error {
 		return err
 	}
 
-	err = os.MkdirAll(PathRoomDB+r.Server+"/archive/", os.ModePerm)
+	err = os.MkdirAll(PathRoomDB+r.Guild+"/archive/", os.ModePerm)
 	if err != nil {
 		return err
 	}
 
-	filename := PathRoomDB + r.Server + "/" + r.Name + ".json"
+	filename := PathRoomDB + r.Guild + "/" + r.Name + ".json"
 	err = os.WriteFile(filename, data, 0640)
 	return err
 }
@@ -80,7 +81,7 @@ func (r *Room) Archive() error {
 		return err
 	}
 
-	filename := PathRoomDB + r.Server + "/archive/" + r.Name + " - " + r.CreateAt.String() + ".json"
+	filename := PathRoomDB + r.Guild + "/archive/" + r.Name + " - " + r.CreateAt.String() + ".json"
 	err = os.WriteFile(filename, data, 0640)
 	return err
 }

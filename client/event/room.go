@@ -48,7 +48,14 @@ func init() {
 					user := i.Member.User
 					filler := FillerList[user.ID]
 
-					RoomList[i.GuildID][roomName] = schema.NewRoom(i.GuildID, roomName, event, user)
+					if list, ok := RoomList[i.GuildID]; ok {
+						list[roomName] = schema.NewRoom(i.GuildID, roomName, event, user)
+					} else {
+						rooms := make(map[string]*schema.Room)
+						rooms[roomName] = schema.NewRoom(i.GuildID, roomName, event, user)
+						RoomList[i.GuildID] = rooms
+					}
+
 					room := RoomList[i.GuildID][roomName]
 
 					err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
@@ -73,7 +80,7 @@ func init() {
 					// If fill-all is selected, add runner to all hour slots.
 					if fill {
 						for j := 0; j < len(room.Schedule); j++ {
-							room.Schedule[j] = append(room.Schedule[j], filler)
+							room.Schedule[j] = append(room.Schedule[j], filler.User.ID)
 						}
 					}
 

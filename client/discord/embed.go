@@ -31,10 +31,6 @@ func NewEmbed(s *discordgo.Session) *discordgo.MessageEmbed {
 func RoomInfoFields(room *schema.Room) []*discordgo.MessageEmbedField {
 	return []*discordgo.MessageEmbedField{
 		{
-			Name:  "Server",
-			Value: FieldStyle(room.Server),
-		},
-		{
 			Name:  "Event",
 			Value: FieldStyle(room.Event.Name),
 		},

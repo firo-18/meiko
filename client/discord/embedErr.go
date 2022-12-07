@@ -15,6 +15,7 @@ const (
 	EmbedErrRoomEnded          = 6
 	EmbedErrInvalidOffset      = 7
 	EmbedErrInvalidOwner       = 8
+	EmbedErrSessionDuplicated  = 9
 )
 
 func EmbedError(s *discordgo.Session, i *discordgo.InteractionCreate, code int) {
@@ -38,6 +39,8 @@ func EmbedError(s *discordgo.Session, i *discordgo.InteractionCreate, code int) 
 		embed.Description = "Invalid offset. Select from the option, or enter an integer between -12 and 12, inclusive."
 	case 8:
 		embed.Description = "You are not the owner/manager of this room. Only owner/manager can alter the room."
+	case 9:
+		embed.Description = "Session for this room is already running."
 	}
 
 	embeds := []*discordgo.MessageEmbed{embed}

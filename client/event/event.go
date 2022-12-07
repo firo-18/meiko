@@ -36,8 +36,6 @@ func init() {
 		ErrExit(err)
 	}
 
-	log.Println(FillerList, RoomList)
-
 	go fetchEvents()
 }
 
