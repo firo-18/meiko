@@ -5,4 +5,4 @@
 *.exe
 
 # Serialized DB
-db/
+db/**/**.json

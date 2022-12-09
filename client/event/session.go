@@ -124,7 +124,7 @@ func init() {
 								h++
 								continue
 							}
-							if nextHourTime.Sub(currTime) <= time.Duration(time.Minute*65) {
+							if nextHourTime.Sub(currTime) <= time.Duration(time.Minute*15) {
 								fillerIDs := room.Schedule[h]
 								fillers := make([]*schema.Filler, len(fillerIDs))
 								for j, id := range fillerIDs {
@@ -157,7 +157,7 @@ func init() {
 
 								roomOrderMention := []string{}
 								for _, f := range roomOrder {
-									if _, ok := HasShift(room, f.User.ID, h-1); !ok || first {
+									if _, ok := HasShift(room.Schedule[h-1], f.User.ID); !ok || first {
 										roomOrderMention = append(roomOrderMention, f.User.Mention())
 									} else {
 										roomOrderMention = append(roomOrderMention, f.User.Username)
@@ -188,7 +188,7 @@ func init() {
 									})
 									ErrExit(err)
 								}
-								// h++
+								h++
 								first = false
 
 								// Log message sending activities.

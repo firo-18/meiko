@@ -26,7 +26,7 @@ func init() {
 	}
 
 	s.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
-		log.Printf("%v#%v is up and running...", s.State.User.Username, s.State.User.Discriminator)
+		log.Printf("%v is up and running...", s.State.User.String())
 	})
 
 	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {

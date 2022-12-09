@@ -15,16 +15,15 @@ const (
 
 // Room lists all the scheduling and user data for tiering.
 type Room struct {
-	Key         string           `json:"key"`
-	Name        string           `json:"name"`
-	Guild       string           `json:"guild"`
-	Event       Event            `json:"event"`
-	EventLength int              `json:"length"`
-	Owner       discordgo.User   `json:"owner"`
-	Manager     discordgo.User   `json:"manager"`
-	CreateAt    time.Time        `json:"createAt"`
-	Schedule    [][]string       `json:"schedule"`
-	Fillers     []discordgo.User `json:"fillers"`
+	Key         string         `json:"key"`
+	Name        string         `json:"name"`
+	Guild       string         `json:"guild"`
+	Event       Event          `json:"event"`
+	EventLength int            `json:"length"`
+	Owner       discordgo.User `json:"owner"`
+	Manager     discordgo.User `json:"manager"`
+	CreateAt    time.Time      `json:"createAt"`
+	Schedule    [][]string     `json:"schedule"`
 }
 
 // NewRoom creates a new Room based on arguments, and return the Room's address.
@@ -76,12 +75,34 @@ func (r *Room) Backup() error {
 
 // Archive writes room data to local json file for archive-purpose.
 func (r *Room) Archive() error {
-	data, err := json.MarshalIndent(r, "", "\t")
-	if err != nil {
-		return err
-	}
+	r.Backup()
 
-	filename := PathRoomDB + r.Guild + "/archive/" + r.Name + " - " + r.CreateAt.String() + ".json"
-	err = os.WriteFile(filename, data, 0640)
+	oldFilename := PathRoomDB + r.Guild + "/" + r.Name + ".json"
+	newFilename := PathRoomDB + r.Guild + "/archive/" + r.Name + " - " + r.CreateAt.String() + ".json"
+	err := os.Rename(oldFilename, newFilename)
+
 	return err
+}
+
+// GetFillers loop through Room's schedule and return all unique fillers' discord User.
+func (r *Room) GetFillers(fillerList map[string]*Filler) map[string]*Filler {
+	list := make(map[string]*Filler)
+
+	for _, h := range r.Schedule {
+		for _, id := range h {
+			if filler, ok := fillerList[id]; ok {
+				list[id] = filler
+			}
+		}
+	}
+	return list
+}
+
+func HasShift(fillers []string, userID string) (int, bool) {
+	for i, filler := range fillers {
+		if filler == userID {
+			return i, true
+		}
+	}
+	return 0, false
 }

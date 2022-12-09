@@ -56,13 +56,11 @@ func init() {
 				// Log link activities.
 				log.Printf("%v has linked to %v. ISV: %v (%v), Offset: %v.", user.String(), s.State.User.String(), isv, skillValue, offset)
 			} else {
-				log.Println(user.ID, &filler)
+				filler.User = *user
 				filler.ISV = isv
 				filler.SkillValue = skillValue
 				filler.Offset = offsetNum
 				filler.LastModified = time.Now()
-
-				log.Println(&filler)
 
 				// Log link activities.
 				log.Printf("%v has updated to %v. ISV: %v (%v), Offset: %v.", user.String(), s.State.User.String(), isv, skillValue, offset)
@@ -93,7 +91,7 @@ func init() {
 								},
 								{
 									Name:  "Skill Multiplier Value",
-									Value: discord.FieldStyle(skillValue),
+									Value: discord.FieldStyle(fmt.Sprintf("%.2f", skillValue)),
 								},
 							},
 						},
