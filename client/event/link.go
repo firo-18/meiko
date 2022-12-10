@@ -48,7 +48,6 @@ func init() {
 			// Calculate skill multiplier from ISV.
 			skillValue := (float64(sum-lead) * 0.002) + float64(lead)/100 + 1
 
-			log.Println(FillerList)
 			// Add or update filler.
 			if filler, ok := FillerList[user.ID]; !ok {
 				FillerList[user.ID] = schema.NewFiller(user, isv, skillValue, offsetNum)

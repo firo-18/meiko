@@ -161,7 +161,11 @@ func init() {
 
 								roomOrderMention := []string{}
 								for _, f := range roomOrder {
-									if _, ok := HasShift(room.Schedule[h-1], f.User.ID); !ok || first {
+									ok := false
+									if h > 0 {
+										_, ok = schema.HasShift(room.Schedule[h-1], f.User.ID)
+									}
+									if !ok || first {
 										roomOrderMention = append(roomOrderMention, f.User.Mention())
 									} else {
 										roomOrderMention = append(roomOrderMention, f.User.Username)

@@ -1,6 +1,8 @@
 package event
 
 import (
+	"log"
+
 	"github.com/bwmarrin/discordgo"
 	"github.com/firo-18/meiko/client/discord"
 )
@@ -16,18 +18,18 @@ func init() {
 						Title: "Welcome to Meiko's Tiering Cafe",
 						Description: `Meiko is a tiering management bot. The idea is to have Meiko automates check in process for fillers, sorts fillers by their ISV based on event type, and sends out pings accordingly until event/session ends.
 
-						There is no dedicated backup fillers feature, and I really don't see the point either. You either sign up for a shift or you don't. If more than 5 people signed up, Meiko will sort them based on ISV and choose the best 5. If you just want to standby, just grab the support role that will be pinged if fillers are needed.
-						
-						Currently, Meiko has the following functions:`,
+There is no dedicated backup fillers feature, and I really don't see the point either. You either sign up for a shift or you don't. If more than 5 people signed up, Meiko will sort them based on ISV and choose the best 5. If you just want to standby, just grab the support role that will be pinged if fillers are needed.
+
+Currently, Meiko has the following functions:`,
 						Color:     discord.EmbedColor,
 						Timestamp: discord.EmbedTimestamp,
 						Footer:    discord.EmbedFooter(s),
 						Fields: []*discordgo.MessageEmbedField{
 							{
 								Name: "/link",
-								Value: discord.FieldStyle(`Users need to first link the account first to use other commands, as the infomation inputted in the linking process such as offset and ISV are required to display the correct time format and sorting accordingly.
-								
-								You can relink as many time you need if your locale or ISV changes.`),
+								Value: discord.FieldStyle(`Users need to first link the account to use other commands, as the infomation inputted in the linking process such as offset and ISV are required to display the correct time format and sorting accordingly.
+
+You can relink as many time you need if your locale or ISV changes.`),
 							},
 							{
 								Name:  "/schedule",
@@ -36,8 +38,8 @@ func init() {
 							{
 								Name: "/room",
 								Value: discord.FieldStyle(`A command to create a new room, preferably by the runner. Input a room name (no duplication), and select an event for the room.
-								
-								Event list is populated by using Sekai database, so if you don't see your event, it means it hasn't been officially announce in EN yet, and I can't do anything about this right now. Fill-all is basically a short cut used to automatically sign you up for all shifts, and you can manually deselect any shift you don't want later.`),
+
+Event list is populated by using Sekai database, so if you don't see your event, it means it hasn't been officially announce in EN yet, and I can't do anything about this right now. Fill-all is basically a short cut used to automatically sign you up for all shifts, and you can manually deselect any shift you don't want later.`),
 							},
 							{
 								Name:  "/view",
@@ -50,8 +52,8 @@ func init() {
 							{
 								Name: "/session",
 								Value: discord.FieldStyle(`For sending out check in messages and sorting fillers. Begin the session will send out message hourly (15 mins prior to shift) to ping users who signed up. She will only ping those who just start a new shift.
-								
-								When you begin the session, you can select a role to ping whenever a shift does not have enough fillers. Lastly, don't forget to end the session when you finish the tiering session to avoid pinging unneccessarily.`),
+
+When you begin the session, you can select a role to ping whenever a shift does not have enough fillers. Lastly, don't forget to end the session when you finish the tiering session to avoid pinging unneccessarily.`),
 							},
 						},
 					},
@@ -62,5 +64,8 @@ func init() {
 		if err != nil {
 			LogError(err, data.Name)
 		}
+
+		// Log activities.
+		log.Printf("%v had a private lesson with %v.", i.Member.User.String(), s.State.User.String())
 	}
 }
