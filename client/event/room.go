@@ -74,7 +74,7 @@ func init() {
 						},
 					})
 					if err != nil {
-						ErrExit(err)
+						LogError(err, data.Name)
 					}
 
 					// If fill-all is selected, add runner to all hour slots.
@@ -133,6 +133,6 @@ func eventAutocomplete(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		},
 	})
 	if err != nil {
-		ErrExit(err)
+		LogError(err, data.Name)
 	}
 }

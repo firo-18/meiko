@@ -25,7 +25,7 @@ func init() {
 
 			h, err := strconv.Atoi(args[2])
 			if err != nil {
-				event.ErrExit(err)
+				event.LogError(err, i.Message.Interaction.Name)
 			}
 
 			room.Schedule[h] = []string{}
@@ -48,7 +48,7 @@ func init() {
 				},
 			})
 			if err != nil {
-				event.ErrExit(err)
+				event.LogError(err, i.Message.Interaction.Name)
 			}
 
 			// Log scheduling activities.

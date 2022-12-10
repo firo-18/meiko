@@ -45,7 +45,7 @@ func init() {
 						},
 					})
 					if err != nil {
-						ErrExit(err)
+						LogError(err, data.Name)
 					}
 
 					time.Sleep(time.Minute * 5)
@@ -55,7 +55,7 @@ func init() {
 					})
 
 					if err != nil {
-						ErrExit(err)
+						LogError(err, data.Name)
 					}
 				}
 			}

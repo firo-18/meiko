@@ -98,7 +98,7 @@ func init() {
 						},
 					})
 					if err != nil {
-						ErrExit(err)
+						LogError(err, data.Name)
 					}
 
 					// Log session activities
@@ -126,6 +126,10 @@ func init() {
 							}
 							if nextHourTime.Sub(currTime) <= time.Duration(time.Minute*15) {
 								fillerIDs := room.Schedule[h]
+								if len(fillerIDs) < 1 {
+									time.Sleep(time.Minute)
+									continue
+								}
 								fillers := make([]*schema.Filler, len(fillerIDs))
 								for j, id := range fillerIDs {
 									fillers[j] = FillerList[id]
@@ -152,7 +156,7 @@ func init() {
 								}
 
 								if err != nil {
-									ErrExit(err)
+									LogError(err, data.Name)
 								}
 
 								roomOrderMention := []string{}
@@ -186,7 +190,7 @@ func init() {
 										Timestamp: discord.EmbedTimestamp,
 										Footer:    discord.EmbedFooter(s),
 									})
-									ErrExit(err)
+									LogError(err, data.Name)
 								}
 								h++
 								first = false
@@ -206,7 +210,7 @@ func init() {
 					Data: &discordgo.InteractionResponseData{},
 				})
 				if err != nil {
-					ErrExit(err)
+					LogError(err, data.Name)
 				}
 
 				// End goroutine if cmd is 'stop'
@@ -238,7 +242,7 @@ func init() {
 					Embeds: &embeds,
 				})
 				if err != nil {
-					ErrExit(err)
+					LogError(err, data.Name)
 				}
 
 				// Log session activities

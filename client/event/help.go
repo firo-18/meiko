@@ -7,6 +7,7 @@ import (
 
 func init() {
 	List["help"] = func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		data := i.ApplicationCommandData()
 		err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
@@ -14,6 +15,8 @@ func init() {
 					{
 						Title: "Welcome to Meiko's Tiering Cafe",
 						Description: `Meiko is a tiering management bot. The idea is to have Meiko automates check in process for fillers, sorts fillers by their ISV based on event type, and sends out pings accordingly until event/session ends.
+
+						There is no dedicated backup fillers feature, and I really don't see the point either. You either sign up for a shift or you don't. If more than 5 people signed up, Meiko will sort them based on ISV and choose the best 5. If you just want to standby, just grab the support role that will be pinged if fillers are needed.
 						
 						Currently, Meiko has the following functions:`,
 						Color:     discord.EmbedColor,
@@ -28,13 +31,13 @@ func init() {
 							},
 							{
 								Name:  "/schedule",
-								Value: discord.FieldStyle("Users who has linked can select an active to schedule their shift. This command is straightforward, as you simply click the day and any/all the shifts you want to run/fill. Click outside the select menu will update your shift, if you made any changes."),
+								Value: discord.FieldStyle("Users who has linked can select an active room to schedule their shifts. This command is straightforward, as you simply click the day and any/all the shifts you want to run/fill. Click outside the select menu will update your shift, if you made any changes."),
 							},
 							{
 								Name: "/room",
 								Value: discord.FieldStyle(`A command to create a new room, preferably by the runner. Input a room name (no duplication), and select an event for the room.
 								
-								Event list is populated by using Sekai database, so if you don't see your event, it means it hasn't been officially announce in EN. I can't do anything about this right now. Fill-all is basically a short cut used to automatically fill all shift with your name (as the runner), and you can manually deselect any shift you don't want later.`),
+								Event list is populated by using Sekai database, so if you don't see your event, it means it hasn't been officially announce in EN yet, and I can't do anything about this right now. Fill-all is basically a short cut used to automatically sign you up for all shifts, and you can manually deselect any shift you don't want later.`),
 							},
 							{
 								Name:  "/view",
@@ -48,7 +51,7 @@ func init() {
 								Name: "/session",
 								Value: discord.FieldStyle(`For sending out check in messages and sorting fillers. Begin the session will send out message hourly (15 mins prior to shift) to ping users who signed up. She will only ping those who just start a new shift.
 								
-								When you begin the session, you can select a role to ping whenever a shift does not have enough fillers. And don't forget to end the session when you finish the tiering session to avoid pinging unneccessarily.`),
+								When you begin the session, you can select a role to ping whenever a shift does not have enough fillers. Lastly, don't forget to end the session when you finish the tiering session to avoid pinging unneccessarily.`),
 							},
 						},
 					},
@@ -57,7 +60,7 @@ func init() {
 			},
 		})
 		if err != nil {
-			ErrExit(err)
+			LogError(err, data.Name)
 		}
 	}
 }

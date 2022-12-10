@@ -34,7 +34,7 @@ func init() {
 					Data: &discordgo.InteractionResponseData{},
 				})
 				if err != nil {
-					event.ErrExit(err)
+					event.LogError(err, i.Message.Interaction.Name)
 				}
 
 				// Check if deselectAll is selected.
@@ -89,7 +89,7 @@ func init() {
 				})
 
 				if err != nil {
-					event.ErrExit(err)
+					event.LogError(err, i.Message.Interaction.Name)
 				}
 
 				// Log scheduling activities.
@@ -107,17 +107,17 @@ func init() {
 						},
 					})
 					if err != nil {
-						event.ErrExit(err)
+						event.LogError(err, i.Message.Interaction.Name)
 					}
 					return
 				}
 				d, err := strconv.Atoi(args[2])
 				if err != nil {
-					event.ErrExit(err)
+					event.LogError(err, i.Message.Interaction.Name)
 				}
 				h, err := strconv.Atoi(args[3])
 				if err != nil {
-					event.ErrExit(err)
+					event.LogError(err, i.Message.Interaction.Name)
 				}
 
 				err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
@@ -128,7 +128,7 @@ func init() {
 					},
 				})
 				if err != nil {
-					event.ErrExit(err)
+					event.LogError(err, i.Message.Interaction.Name)
 				}
 			}
 

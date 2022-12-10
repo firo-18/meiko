@@ -100,7 +100,7 @@ func init() {
 				},
 			})
 			if err != nil {
-				ErrExit(err)
+				LogError(err, data.Name)
 			}
 
 			// Backup filler data.
@@ -155,6 +155,6 @@ func offsetAutocomplete(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		},
 	})
 	if err != nil {
-		ErrExit(err)
+		LogError(err, data.Name)
 	}
 }

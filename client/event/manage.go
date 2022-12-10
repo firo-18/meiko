@@ -42,7 +42,7 @@ func init() {
 					// Backup as json before deleting room.
 					err := room.Archive()
 					if err != nil {
-						ErrExit(err)
+						LogError(err, data.Name)
 					}
 
 					delete(RoomList[args[0]], args[1])
@@ -62,7 +62,7 @@ func init() {
 						},
 					})
 					if err != nil {
-						ErrExit(err)
+						LogError(err, data.Name)
 					}
 
 					log.Printf("%v has deleted the room '%v' from guild '%v'.", user.String(), room.Name, room.Guild)
@@ -101,7 +101,7 @@ func init() {
 						},
 					})
 					if err != nil {
-						ErrExit(err)
+						LogError(err, data.Name)
 					}
 
 					// Backup room data.
@@ -114,7 +114,7 @@ func init() {
 					})
 
 					if err != nil {
-						ErrExit(err)
+						LogError(err, data.Name)
 					}
 
 				}

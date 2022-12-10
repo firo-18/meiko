@@ -28,12 +28,12 @@ func init() {
 	var err error
 	RoomList, err = db.FetchRoomList()
 	if err != nil {
-		ErrExit(err)
+		LogError(err, "fetchRoomList")
 	}
 
 	FillerList, err = db.FetchFillers()
 	if err != nil {
-		ErrExit(err)
+		LogError(err, "fetchFillers")
 	}
 
 	go fetchEvents()
@@ -47,8 +47,6 @@ func fetchEvents() {
 	}
 }
 
-func ErrExit(err error) {
-	log.Println("Client restarting due to error encountered:", err)
-
-	os.Exit(1)
+func LogError(err error, cmd string) {
+	log.Printf("Origin: %v. Error: %v", cmd, err)
 }

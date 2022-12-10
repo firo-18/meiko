@@ -14,6 +14,7 @@ func init() {
 		for _, g := range s.State.Guilds {
 			guildList = append(guildList, g.Name)
 		}
+		data := i.ApplicationCommandData()
 
 		err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -40,7 +41,7 @@ func init() {
 			},
 		})
 		if err != nil {
-			ErrExit(err)
+			LogError(err, data.Name)
 		}
 	}
 }

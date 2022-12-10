@@ -27,7 +27,7 @@ func init() {
 			day := args[2]
 			d, err := strconv.Atoi(day)
 			if err != nil {
-				event.ErrExit(err)
+				event.LogError(err, i.Message.Interaction.Name)
 			}
 			components := []discordgo.MessageComponent{}
 
@@ -46,7 +46,7 @@ func init() {
 				},
 			})
 			if err != nil {
-				event.ErrExit(err)
+				event.LogError(err, i.Message.Interaction.Name)
 			}
 		}
 	}
